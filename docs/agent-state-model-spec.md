@@ -303,7 +303,7 @@ The public state model should support:
 
 This is especially important for:
 
-- OpenClaw
+- Hermes
 - Hermes
 - Demo mode
 - future custom providers

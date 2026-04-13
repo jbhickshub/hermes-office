@@ -23,7 +23,7 @@ export type StudioGatewaySettings = {
   lastKnownGood?: StudioGatewayConnectionState;
 };
 
-export type StudioGatewayAdapterType = "openclaw" | "hermes" | "demo" | "custom";
+export type StudioGatewayAdapterType = "hermes" | "demo" | "custom";
 
 export type StudioGatewayProfile = {
   url: string;
@@ -40,7 +40,9 @@ export type StudioGatewaySettingsPublic = {
   url: string;
   tokenConfigured: boolean;
   adapterType: StudioGatewayAdapterType;
-  profiles?: Partial<Record<StudioGatewayAdapterType, StudioGatewayProfilePublic>>;
+  profiles?: Partial<
+    Record<StudioGatewayAdapterType, StudioGatewayProfilePublic>
+  >;
   lastKnownGood?: StudioGatewayConnectionStatePublic;
 };
 
@@ -59,7 +61,9 @@ export type StudioGatewaySettingsPatch = {
   url?: string | null;
   token?: string | null;
   adapterType?: StudioGatewayAdapterType | null;
-  profiles?: Partial<Record<StudioGatewayAdapterType, StudioGatewayProfilePatch | null>> | null;
+  profiles?: Partial<
+    Record<StudioGatewayAdapterType, StudioGatewayProfilePatch | null>
+  > | null;
   lastKnownGood?: StudioGatewayConnectionStatePatch | null;
 };
 
@@ -117,7 +121,7 @@ export type StudioVoiceRepliesPreferencePatch = {
 export type StudioOfficePreference = {
   title: string;
   remoteOfficeEnabled: boolean;
-  remoteOfficeSourceKind: "presence_endpoint" | "openclaw_gateway";
+  remoteOfficeSourceKind: "presence_endpoint" | "hermes_gateway";
   remoteOfficeLabel: string;
   remoteOfficePresenceUrl: string;
   remoteOfficeGatewayUrl: string;
@@ -134,7 +138,7 @@ export type StudioOfficePreference = {
 export type StudioOfficePreferencePublic = {
   title: string;
   remoteOfficeEnabled: boolean;
-  remoteOfficeSourceKind: "presence_endpoint" | "openclaw_gateway";
+  remoteOfficeSourceKind: "presence_endpoint" | "hermes_gateway";
   remoteOfficeLabel: string;
   remoteOfficePresenceUrl: string;
   remoteOfficeGatewayUrl: string;
@@ -151,7 +155,7 @@ export type StudioOfficePreferencePublic = {
 export type StudioOfficePreferencePatch = {
   title?: string | null;
   remoteOfficeEnabled?: boolean;
-  remoteOfficeSourceKind?: "presence_endpoint" | "openclaw_gateway";
+  remoteOfficeSourceKind?: "presence_endpoint" | "hermes_gateway";
   remoteOfficeLabel?: string | null;
   remoteOfficePresenceUrl?: string | null;
   remoteOfficeGatewayUrl?: string | null;
@@ -170,7 +174,10 @@ export type StudioAgentAvatars = Record<string, AgentAvatarProfile>;
 
 export type StudioStandupPreference = StandupConfig;
 
-export type StudioStandupPreferencePublic = Omit<StudioStandupPreference, "jira"> & {
+export type StudioStandupPreferencePublic = Omit<
+  StudioStandupPreference,
+  "jira"
+> & {
   jira: StandupJiraConfigPublic;
 };
 
@@ -202,7 +209,10 @@ export type StudioSettings = {
   taskBoard?: Record<string, StudioTaskBoardPreference>;
 };
 
-export type StudioSettingsPublic = Omit<StudioSettings, "gateway" | "office" | "standup"> & {
+export type StudioSettingsPublic = Omit<
+  StudioSettings,
+  "gateway" | "office" | "standup"
+> & {
   gateway: StudioGatewaySettingsPublic | null;
   office: Record<string, StudioOfficePreferencePublic>;
   standup?: Record<string, StudioStandupPreferencePublic>;
@@ -226,7 +236,8 @@ const SETTINGS_VERSION = 1 as const;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value && typeof value === "object");
 
-const coerceString = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+const coerceString = (value: unknown) =>
+  typeof value === "string" ? value.trim() : "";
 const LOOPBACK_HOSTNAMES = new Set(["127.0.0.1", "::1", "0.0.0.0"]);
 
 const normalizeGatewayUrl = (value: unknown) => {
@@ -243,7 +254,10 @@ const normalizeGatewayUrl = (value: unknown) => {
         : "";
     const host = parsed.port ? `localhost:${parsed.port}` : "localhost";
     const dropDefaultPath =
-      parsed.pathname === "/" && !url.endsWith("/") && !parsed.search && !parsed.hash;
+      parsed.pathname === "/" &&
+      !url.endsWith("/") &&
+      !parsed.search &&
+      !parsed.hash;
     const pathname = dropDefaultPath ? "" : parsed.pathname;
     return `${parsed.protocol}//${auth}${host}${pathname}${parsed.search}${parsed.hash}`;
   } catch {
@@ -258,16 +272,12 @@ const normalizeGatewayKey = (value: unknown) => {
 
 const normalizeFocusFilter = (
   value: unknown,
-  fallback: FocusFilter = "all"
+  fallback: FocusFilter = "all",
 ): FocusFilter => {
   const filter = coerceString(value);
   if (filter === "needs-attention") return "all";
   if (filter === "idle") return "approvals";
-  if (
-    filter === "all" ||
-    filter === "running" ||
-    filter === "approvals"
-  ) {
+  if (filter === "all" || filter === "running" || filter === "approvals") {
     return filter;
   }
   return fallback;
@@ -275,7 +285,7 @@ const normalizeFocusFilter = (
 
 const normalizeViewMode = (
   value: unknown,
-  fallback: StudioViewMode = "focused"
+  fallback: StudioViewMode = "focused",
 ): StudioViewMode => {
   const mode = coerceString(value);
   if (mode === "focused") {
@@ -284,14 +294,20 @@ const normalizeViewMode = (
   return fallback;
 };
 
-const normalizeSelectedAgentId = (value: unknown, fallback: string | null = null) => {
+const normalizeSelectedAgentId = (
+  value: unknown,
+  fallback: string | null = null,
+) => {
   if (value === null) return null;
   if (typeof value !== "string") return fallback;
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
 };
 
-const normalizeOptionalNumber = (value: unknown, fallback: number | null = null) => {
+const normalizeOptionalNumber = (
+  value: unknown,
+  fallback: number | null = null,
+) => {
   if (value === null) return null;
   if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
   return value;
@@ -309,14 +325,15 @@ const defaultFocusedPreference = (): StudioFocusedPreference => ({
   filter: "all",
 });
 
-export const defaultStudioAnalyticsPreference = (): StudioAnalyticsPreference => ({
-  budgets: {
-    dailySpendLimitUsd: null,
-    monthlySpendLimitUsd: null,
-    perAgentSoftLimitUsd: null,
-    alertThresholdPct: 80,
-  },
-});
+export const defaultStudioAnalyticsPreference =
+  (): StudioAnalyticsPreference => ({
+    budgets: {
+      dailySpendLimitUsd: null,
+      monthlySpendLimitUsd: null,
+      perAgentSoftLimitUsd: null,
+      alertThresholdPct: 80,
+    },
+  });
 
 export const defaultStudioVoiceRepliesPreference =
   (): StudioVoiceRepliesPreference => ({
@@ -326,14 +343,15 @@ export const defaultStudioVoiceRepliesPreference =
     speed: 1,
   });
 
-export const defaultStudioStandupScheduleConfig = (): StandupScheduleConfig => ({
-  enabled: false,
-  cronExpr: "0 9 * * 1-5",
-  timezone: "UTC",
-  speakerSeconds: 8,
-  autoOpenBoard: true,
-  lastAutoRunAt: null,
-});
+export const defaultStudioStandupScheduleConfig =
+  (): StandupScheduleConfig => ({
+    enabled: false,
+    cronExpr: "0 9 * * 1-5",
+    timezone: "UTC",
+    speakerSeconds: 8,
+    autoOpenBoard: true,
+    lastAutoRunAt: null,
+  });
 
 export const defaultStudioStandupJiraConfig = (): StandupJiraConfig => ({
   enabled: false,
@@ -358,17 +376,20 @@ export const defaultStudioStandupPreference = (): StudioStandupPreference => ({
   manualByAgentId: {},
 });
 
-export const defaultStudioTaskBoardPreference =
-  (): StudioTaskBoardPreference => defaultTaskBoardPreference();
+export const defaultStudioTaskBoardPreference = (): StudioTaskBoardPreference =>
+  defaultTaskBoardPreference();
 
-const normalizeVoiceReplySpeed = (value: unknown, fallback: number = 1): number => {
+const normalizeVoiceReplySpeed = (
+  value: unknown,
+  fallback: number = 1,
+): number => {
   if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
   return Math.min(1.2, Math.max(0.7, value));
 };
 
 const normalizeOptionalIsoString = (
   value: unknown,
-  fallback: string | null = null
+  fallback: string | null = null,
 ): string | null => {
   if (value === null) return null;
   if (typeof value !== "string") return fallback;
@@ -387,47 +408,76 @@ const normalizeTaskBoardNotes = (value: unknown, fallback: string[] = []) => {
 
 const normalizeTaskBoardCard = (
   value: unknown,
-  fallback?: TaskBoardCard
+  fallback?: TaskBoardCard,
 ): TaskBoardCard => {
   const nowIso = new Date().toISOString();
   const record = isRecord(value) ? value : {};
   return {
     id: coerceString(record.id) || fallback?.id || "",
     title: coerceString(record.title) || fallback?.title || "Untitled task",
-    description: coerceString(record.description) || fallback?.description || "",
-    status: isTaskBoardStatus(record.status) ? record.status : (fallback?.status ?? "todo"),
+    description:
+      coerceString(record.description) || fallback?.description || "",
+    status: isTaskBoardStatus(record.status)
+      ? record.status
+      : (fallback?.status ?? "todo"),
     source: isTaskBoardSource(record.source)
       ? record.source
       : (fallback?.source ?? "claw3d_manual"),
     sourceEventId:
-      normalizeOptionalIsoString(record.sourceEventId, fallback?.sourceEventId ?? null) ??
-      null,
+      normalizeOptionalIsoString(
+        record.sourceEventId,
+        fallback?.sourceEventId ?? null,
+      ) ?? null,
     assignedAgentId:
-      normalizeSelectedAgentId(record.assignedAgentId, fallback?.assignedAgentId ?? null) ?? null,
+      normalizeSelectedAgentId(
+        record.assignedAgentId,
+        fallback?.assignedAgentId ?? null,
+      ) ?? null,
     createdAt:
-      normalizeOptionalIsoString(record.createdAt, fallback?.createdAt ?? nowIso) ?? nowIso,
+      normalizeOptionalIsoString(
+        record.createdAt,
+        fallback?.createdAt ?? nowIso,
+      ) ?? nowIso,
     updatedAt:
-      normalizeOptionalIsoString(record.updatedAt, fallback?.updatedAt ?? nowIso) ?? nowIso,
+      normalizeOptionalIsoString(
+        record.updatedAt,
+        fallback?.updatedAt ?? nowIso,
+      ) ?? nowIso,
     playbookJobId:
-      normalizeSelectedAgentId(record.playbookJobId, fallback?.playbookJobId ?? null) ?? null,
-    runId: normalizeSelectedAgentId(record.runId, fallback?.runId ?? null) ?? null,
-    channel: normalizeSelectedAgentId(record.channel, fallback?.channel ?? null) ?? null,
-    externalThreadId:
-      normalizeSelectedAgentId(record.externalThreadId, fallback?.externalThreadId ?? null) ??
+      normalizeSelectedAgentId(
+        record.playbookJobId,
+        fallback?.playbookJobId ?? null,
+      ) ?? null,
+    runId:
+      normalizeSelectedAgentId(record.runId, fallback?.runId ?? null) ?? null,
+    channel:
+      normalizeSelectedAgentId(record.channel, fallback?.channel ?? null) ??
       null,
+    externalThreadId:
+      normalizeSelectedAgentId(
+        record.externalThreadId,
+        fallback?.externalThreadId ?? null,
+      ) ?? null,
     lastActivityAt:
-      normalizeOptionalIsoString(record.lastActivityAt, fallback?.lastActivityAt ?? null) ?? null,
+      normalizeOptionalIsoString(
+        record.lastActivityAt,
+        fallback?.lastActivityAt ?? null,
+      ) ?? null,
     notes: normalizeTaskBoardNotes(record.notes, fallback?.notes ?? []),
     isArchived:
-      typeof record.isArchived === "boolean" ? record.isArchived : (fallback?.isArchived ?? false),
+      typeof record.isArchived === "boolean"
+        ? record.isArchived
+        : (fallback?.isArchived ?? false),
     isInferred:
-      typeof record.isInferred === "boolean" ? record.isInferred : (fallback?.isInferred ?? false),
+      typeof record.isInferred === "boolean"
+        ? record.isInferred
+        : (fallback?.isInferred ?? false),
   };
 };
 
 const normalizeTaskBoardPreference = (
   value: unknown,
-  fallback: StudioTaskBoardPreference = defaultStudioTaskBoardPreference()
+  fallback: StudioTaskBoardPreference = defaultStudioTaskBoardPreference(),
 ): StudioTaskBoardPreference => {
   const record = isRecord(value) ? value : {};
   const rawCards = Array.isArray(record.cards) ? record.cards : fallback.cards;
@@ -436,17 +486,20 @@ const normalizeTaskBoardPreference = (
       .map((entry) => normalizeTaskBoardCard(entry))
       .filter((entry) => entry.id.length > 0),
     selectedCardId:
-      normalizeSelectedAgentId(record.selectedCardId, fallback.selectedCardId) ?? null,
+      normalizeSelectedAgentId(
+        record.selectedCardId,
+        fallback.selectedCardId,
+      ) ?? null,
   };
 };
 
-const DEFAULT_OFFICE_TITLE = "Luke Headquarters";
+const DEFAULT_OFFICE_TITLE = "HERMES HQ";
 const DEFAULT_REMOTE_OFFICE_LABEL = "Remote Office";
 const DEFAULT_REMOTE_OFFICE_SOURCE_KIND = "presence_endpoint" as const;
 
 const normalizeOfficeTitle = (
   value: unknown,
-  fallback: string = DEFAULT_OFFICE_TITLE
+  fallback: string = DEFAULT_OFFICE_TITLE,
 ) => {
   const title = coerceString(value);
   return (title || fallback).slice(0, 48);
@@ -454,7 +507,7 @@ const normalizeOfficeTitle = (
 
 const normalizeRemoteOfficeLabel = (
   value: unknown,
-  fallback: string = DEFAULT_REMOTE_OFFICE_LABEL
+  fallback: string = DEFAULT_REMOTE_OFFICE_LABEL,
 ) => {
   const label = coerceString(value);
   return (label || fallback).slice(0, 48);
@@ -470,7 +523,7 @@ const normalizeRemoteOfficeSourceKind = (
   fallback: StudioOfficePreference["remoteOfficeSourceKind"] = DEFAULT_REMOTE_OFFICE_SOURCE_KIND,
 ): StudioOfficePreference["remoteOfficeSourceKind"] => {
   const kind = coerceString(value);
-  if (kind === "presence_endpoint" || kind === "openclaw_gateway") {
+  if (kind === "presence_endpoint" || kind === "hermes_gateway") {
     return kind;
   }
   return fallback;
@@ -493,9 +546,13 @@ const normalizeRemoteOfficeGatewayUrl = (value: unknown) => {
   }
 };
 
-const normalizeCompanyField = (value: unknown) => coerceString(value).slice(0, 10_000);
+const normalizeCompanyField = (value: unknown) =>
+  coerceString(value).slice(0, 10_000);
 
-const normalizeCompanyRoleTitles = (value: unknown, fallback: string[] = []) => {
+const normalizeCompanyRoleTitles = (
+  value: unknown,
+  fallback: string[] = [],
+) => {
   if (!Array.isArray(value)) return fallback;
   return value
     .filter((entry): entry is string => typeof entry === "string")
@@ -540,7 +597,7 @@ export const defaultStudioOfficePreferencePublic =
   });
 
 export const sanitizeStudioOfficePreference = (
-  value: StudioOfficePreference
+  value: StudioOfficePreference,
 ): StudioOfficePreferencePublic => ({
   title: value.title,
   remoteOfficeEnabled: value.remoteOfficeEnabled,
@@ -560,17 +617,19 @@ export const sanitizeStudioOfficePreference = (
 
 const normalizeStandupScheduleConfig = (
   value: unknown,
-  fallback: StandupScheduleConfig = defaultStudioStandupScheduleConfig()
+  fallback: StandupScheduleConfig = defaultStudioStandupScheduleConfig(),
 ): StandupScheduleConfig => {
   if (!isRecord(value)) return fallback;
   const cronExpr = coerceString(value.cronExpr) || fallback.cronExpr;
   const timezone = coerceString(value.timezone) || fallback.timezone;
   const speakerSecondsRaw =
-    typeof value.speakerSeconds === "number" && Number.isFinite(value.speakerSeconds)
+    typeof value.speakerSeconds === "number" &&
+    Number.isFinite(value.speakerSeconds)
       ? Math.round(value.speakerSeconds)
       : fallback.speakerSeconds;
   return {
-    enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
+    enabled:
+      typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
     cronExpr,
     timezone,
     speakerSeconds: Math.max(4, Math.min(120, speakerSecondsRaw)),
@@ -580,34 +639,39 @@ const normalizeStandupScheduleConfig = (
         : fallback.autoOpenBoard,
     lastAutoRunAt: normalizeOptionalIsoString(
       value.lastAutoRunAt,
-      fallback.lastAutoRunAt
+      fallback.lastAutoRunAt,
     ),
   };
 };
 
 const normalizeStandupJiraConfig = (
   value: unknown,
-  fallback: StandupJiraConfig = defaultStudioStandupJiraConfig()
+  fallback: StandupJiraConfig = defaultStudioStandupJiraConfig(),
 ): StandupJiraConfig => {
   if (!isRecord(value)) return fallback;
   const baseUrl = coerceString(value.baseUrl).replace(/\/+$/, "");
   return {
-    enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
+    enabled:
+      typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
     baseUrl: baseUrl || fallback.baseUrl,
     email: coerceString(value.email) || fallback.email,
     apiToken: coerceString(value.apiToken) || fallback.apiToken,
-    projectKey: coerceString(value.projectKey).toUpperCase() || fallback.projectKey,
+    projectKey:
+      coerceString(value.projectKey).toUpperCase() || fallback.projectKey,
     jql: coerceString(value.jql) || fallback.jql,
   };
 };
 
 const normalizeStandupManualEntry = (
   value: unknown,
-  fallback: StandupManualEntry = defaultStudioStandupManualEntry()
+  fallback: StandupManualEntry = defaultStudioStandupManualEntry(),
 ): StandupManualEntry => {
   if (!isRecord(value)) return fallback;
   return {
-    jiraAssignee: normalizeSelectedAgentId(value.jiraAssignee, fallback.jiraAssignee),
+    jiraAssignee: normalizeSelectedAgentId(
+      value.jiraAssignee,
+      fallback.jiraAssignee,
+    ),
     currentTask: coerceString(value.currentTask) || fallback.currentTask,
     blockers: coerceString(value.blockers) || fallback.blockers,
     note: coerceString(value.note) || fallback.note,
@@ -617,17 +681,19 @@ const normalizeStandupManualEntry = (
 
 const normalizeStandupPreference = (
   value: unknown,
-  fallback: StudioStandupPreference = defaultStudioStandupPreference()
+  fallback: StudioStandupPreference = defaultStudioStandupPreference(),
 ): StudioStandupPreference => {
   if (!isRecord(value)) return fallback;
   const manualByAgentId: Record<string, StandupManualEntry> = {};
   if (isRecord(value.manualByAgentId)) {
-    for (const [agentIdRaw, entryRaw] of Object.entries(value.manualByAgentId)) {
+    for (const [agentIdRaw, entryRaw] of Object.entries(
+      value.manualByAgentId,
+    )) {
       const agentId = coerceString(agentIdRaw);
       if (!agentId) continue;
       manualByAgentId[agentId] = normalizeStandupManualEntry(
         entryRaw,
-        fallback.manualByAgentId[agentId] ?? defaultStudioStandupManualEntry()
+        fallback.manualByAgentId[agentId] ?? defaultStudioStandupManualEntry(),
       );
     }
   }
@@ -639,7 +705,7 @@ const normalizeStandupPreference = (
 };
 
 const normalizeStandup = (
-  value: unknown
+  value: unknown,
 ): Record<string, StudioStandupPreference> => {
   if (!isRecord(value)) return {};
   const standup: Record<string, StudioStandupPreference> = {};
@@ -652,7 +718,7 @@ const normalizeStandup = (
 };
 
 const normalizeTaskBoard = (
-  value: unknown
+  value: unknown,
 ): Record<string, StudioTaskBoardPreference> => {
   if (!isRecord(value)) return {};
   const taskBoard: Record<string, StudioTaskBoardPreference> = {};
@@ -666,20 +732,22 @@ const normalizeTaskBoard = (
 
 const normalizeFocusedPreference = (
   value: unknown,
-  fallback: StudioFocusedPreference = defaultFocusedPreference()
+  fallback: StudioFocusedPreference = defaultFocusedPreference(),
 ): StudioFocusedPreference => {
   if (!isRecord(value)) return fallback;
   return {
     mode: normalizeViewMode(value.mode, fallback.mode),
     selectedAgentId: normalizeSelectedAgentId(
       value.selectedAgentId,
-      fallback.selectedAgentId
+      fallback.selectedAgentId,
     ),
     filter: normalizeFocusFilter(value.filter, fallback.filter),
   };
 };
 
-const normalizeGatewaySettings = (value: unknown): StudioGatewaySettings | null => {
+const normalizeGatewaySettings = (
+  value: unknown,
+): StudioGatewaySettings | null => {
   if (!isRecord(value)) return null;
   const url = normalizeGatewayUrl(value.url);
   if (!url) return null;
@@ -696,7 +764,9 @@ const normalizeGatewaySettings = (value: unknown): StudioGatewaySettings | null 
   };
 };
 
-const normalizeGatewayProfile = (value: unknown): StudioGatewayProfile | null => {
+const normalizeGatewayProfile = (
+  value: unknown,
+): StudioGatewayProfile | null => {
   if (!isRecord(value)) return null;
   const url = normalizeGatewayUrl(value.url);
   if (!url) return null;
@@ -705,11 +775,15 @@ const normalizeGatewayProfile = (value: unknown): StudioGatewayProfile | null =>
 };
 
 const normalizeGatewayProfiles = (
-  value: unknown
-): Partial<Record<StudioGatewayAdapterType, StudioGatewayProfile>> | undefined => {
+  value: unknown,
+):
+  | Partial<Record<StudioGatewayAdapterType, StudioGatewayProfile>>
+  | undefined => {
   if (!isRecord(value)) return undefined;
-  const profiles: Partial<Record<StudioGatewayAdapterType, StudioGatewayProfile>> = {};
-  for (const adapterType of ["openclaw", "hermes", "demo", "custom"] as const) {
+  const profiles: Partial<
+    Record<StudioGatewayAdapterType, StudioGatewayProfile>
+  > = {};
+  for (const adapterType of ["hermes", "demo", "custom"] as const) {
     const normalized = normalizeGatewayProfile(value[adapterType]);
     if (normalized) {
       profiles[adapterType] = normalized;
@@ -719,7 +793,7 @@ const normalizeGatewayProfiles = (
 };
 
 const normalizeGatewayConnectionState = (
-  value: unknown
+  value: unknown,
 ): StudioGatewayConnectionState | null => {
   if (!isRecord(value)) return null;
   const url = normalizeGatewayUrl(value.url);
@@ -735,18 +809,22 @@ const mergeGatewaySettings = (
 ): StudioGatewaySettings | null => {
   if (patch === null) return null;
   const nextUrl =
-    patch.url === undefined ? current?.url ?? "" : normalizeGatewayUrl(patch.url);
+    patch.url === undefined
+      ? (current?.url ?? "")
+      : normalizeGatewayUrl(patch.url);
   if (!nextUrl) return null;
   const nextToken =
-    patch.token === undefined ? current?.token ?? "" : coerceString(patch.token);
+    patch.token === undefined
+      ? (current?.token ?? "")
+      : coerceString(patch.token);
   const nextAdapterType =
     patch.adapterType === undefined
-      ? current?.adapterType ?? "openclaw"
+      ? (current?.adapterType ?? "hermes")
       : normalizeGatewayAdapterType(patch.adapterType);
   const nextProfiles = mergeGatewayProfiles(current?.profiles, patch.profiles);
   const nextLastKnownGood = mergeGatewayConnectionState(
     current?.lastKnownGood ?? null,
-    patch.lastKnownGood
+    patch.lastKnownGood,
   );
   return {
     url: nextUrl,
@@ -758,18 +836,25 @@ const mergeGatewaySettings = (
 };
 
 const mergeGatewayProfiles = (
-  current: Partial<Record<StudioGatewayAdapterType, StudioGatewayProfile>> | undefined,
+  current:
+    | Partial<Record<StudioGatewayAdapterType, StudioGatewayProfile>>
+    | undefined,
   patch:
-    | Partial<Record<StudioGatewayAdapterType, StudioGatewayProfilePatch | null>>
+    | Partial<
+        Record<StudioGatewayAdapterType, StudioGatewayProfilePatch | null>
+      >
     | null
     | undefined,
-): Partial<Record<StudioGatewayAdapterType, StudioGatewayProfile>> | undefined => {
+):
+  | Partial<Record<StudioGatewayAdapterType, StudioGatewayProfile>>
+  | undefined => {
   if (patch === null) return undefined;
   if (patch === undefined) return current;
-  const next: Partial<Record<StudioGatewayAdapterType, StudioGatewayProfile>> = {
-    ...(current ?? {}),
-  };
-  for (const adapterType of ["openclaw", "hermes", "demo", "custom"] as const) {
+  const next: Partial<Record<StudioGatewayAdapterType, StudioGatewayProfile>> =
+    {
+      ...(current ?? {}),
+    };
+  for (const adapterType of ["hermes", "demo", "custom"] as const) {
     const profilePatch = patch[adapterType];
     if (profilePatch === undefined) continue;
     if (profilePatch === null) {
@@ -779,14 +864,16 @@ const mergeGatewayProfiles = (
     const existing = current?.[adapterType] ?? null;
     const nextUrl =
       profilePatch.url === undefined
-        ? existing?.url ?? ""
+        ? (existing?.url ?? "")
         : normalizeGatewayUrl(profilePatch.url);
     if (!nextUrl) {
       delete next[adapterType];
       continue;
     }
     const nextToken =
-      profilePatch.token === undefined ? existing?.token ?? "" : coerceString(profilePatch.token);
+      profilePatch.token === undefined
+        ? (existing?.token ?? "")
+        : coerceString(profilePatch.token);
     next[adapterType] = { url: nextUrl, token: nextToken };
   }
   return Object.keys(next).length > 0 ? next : undefined;
@@ -794,18 +881,22 @@ const mergeGatewayProfiles = (
 
 const mergeGatewayConnectionState = (
   current: StudioGatewayConnectionState | null,
-  patch: StudioGatewayConnectionStatePatch | null | undefined
+  patch: StudioGatewayConnectionStatePatch | null | undefined,
 ): StudioGatewayConnectionState | null => {
   if (patch === null) return null;
   if (patch === undefined) return current;
   const nextUrl =
-    patch.url === undefined ? current?.url ?? "" : normalizeGatewayUrl(patch.url);
+    patch.url === undefined
+      ? (current?.url ?? "")
+      : normalizeGatewayUrl(patch.url);
   if (!nextUrl) return null;
   const nextToken =
-    patch.token === undefined ? current?.token ?? "" : coerceString(patch.token);
+    patch.token === undefined
+      ? (current?.token ?? "")
+      : coerceString(patch.token);
   const nextAdapterType =
     patch.adapterType === undefined
-      ? current?.adapterType ?? "openclaw"
+      ? (current?.adapterType ?? "hermes")
       : normalizeGatewayAdapterType(patch.adapterType);
   return {
     url: nextUrl,
@@ -816,13 +907,12 @@ const mergeGatewayConnectionState = (
 
 const normalizeGatewayAdapterType = (
   value: unknown,
-  fallback: StudioGatewayAdapterType = "openclaw"
+  fallback: StudioGatewayAdapterType = "hermes",
 ): StudioGatewayAdapterType => {
   const adapterType = coerceString(value).toLowerCase();
   if (
     adapterType === "demo" ||
     adapterType === "hermes" ||
-    adapterType === "openclaw" ||
     adapterType === "custom"
   ) {
     return adapterType;
@@ -830,7 +920,9 @@ const normalizeGatewayAdapterType = (
   return fallback;
 };
 
-const normalizeFocused = (value: unknown): Record<string, StudioFocusedPreference> => {
+const normalizeFocused = (
+  value: unknown,
+): Record<string, StudioFocusedPreference> => {
   if (!isRecord(value)) return {};
   const focused: Record<string, StudioFocusedPreference> = {};
   for (const [gatewayKeyRaw, focusedRaw] of Object.entries(value)) {
@@ -841,7 +933,9 @@ const normalizeFocused = (value: unknown): Record<string, StudioFocusedPreferenc
   return focused;
 };
 
-const normalizeAvatars = (value: unknown): Record<string, StudioAgentAvatars> => {
+const normalizeAvatars = (
+  value: unknown,
+): Record<string, StudioAgentAvatars> => {
   if (!isRecord(value)) return {};
   const avatars: Record<string, StudioAgentAvatars> = {};
   for (const [gatewayKeyRaw, gatewayRaw] of Object.entries(value)) {
@@ -883,32 +977,33 @@ const normalizeDeskAssignments = (
 
 const normalizeAnalyticsBudgetSettings = (
   value: unknown,
-  fallback: StudioAnalyticsBudgetSettings = defaultStudioAnalyticsPreference().budgets
+  fallback: StudioAnalyticsBudgetSettings = defaultStudioAnalyticsPreference()
+    .budgets,
 ): StudioAnalyticsBudgetSettings => {
   if (!isRecord(value)) return fallback;
   return {
     dailySpendLimitUsd: normalizeOptionalNumber(
       value.dailySpendLimitUsd,
-      fallback.dailySpendLimitUsd
+      fallback.dailySpendLimitUsd,
     ),
     monthlySpendLimitUsd: normalizeOptionalNumber(
       value.monthlySpendLimitUsd,
-      fallback.monthlySpendLimitUsd
+      fallback.monthlySpendLimitUsd,
     ),
     perAgentSoftLimitUsd: normalizeOptionalNumber(
       value.perAgentSoftLimitUsd,
-      fallback.perAgentSoftLimitUsd
+      fallback.perAgentSoftLimitUsd,
     ),
     alertThresholdPct: normalizeAlertThresholdPct(
       value.alertThresholdPct,
-      fallback.alertThresholdPct
+      fallback.alertThresholdPct,
     ),
   };
 };
 
 const normalizeAnalyticsPreference = (
   value: unknown,
-  fallback: StudioAnalyticsPreference = defaultStudioAnalyticsPreference()
+  fallback: StudioAnalyticsPreference = defaultStudioAnalyticsPreference(),
 ): StudioAnalyticsPreference => {
   if (!isRecord(value)) return fallback;
   return {
@@ -916,7 +1011,9 @@ const normalizeAnalyticsPreference = (
   };
 };
 
-const normalizeAnalytics = (value: unknown): Record<string, StudioAnalyticsPreference> => {
+const normalizeAnalytics = (
+  value: unknown,
+): Record<string, StudioAnalyticsPreference> => {
   if (!isRecord(value)) return {};
   const analytics: Record<string, StudioAnalyticsPreference> = {};
   for (const [gatewayKeyRaw, analyticsRaw] of Object.entries(value)) {
@@ -929,7 +1026,7 @@ const normalizeAnalytics = (value: unknown): Record<string, StudioAnalyticsPrefe
 
 const normalizeVoiceRepliesProvider = (
   value: unknown,
-  fallback: StudioVoiceRepliesProvider = "elevenlabs"
+  fallback: StudioVoiceRepliesProvider = "elevenlabs",
 ): StudioVoiceRepliesProvider => {
   const provider = coerceString(value);
   return provider === "elevenlabs" ? provider : fallback;
@@ -937,11 +1034,12 @@ const normalizeVoiceRepliesProvider = (
 
 const normalizeVoiceRepliesPreference = (
   value: unknown,
-  fallback: StudioVoiceRepliesPreference = defaultStudioVoiceRepliesPreference()
+  fallback: StudioVoiceRepliesPreference = defaultStudioVoiceRepliesPreference(),
 ): StudioVoiceRepliesPreference => {
   if (!isRecord(value)) return fallback;
   return {
-    enabled: typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
+    enabled:
+      typeof value.enabled === "boolean" ? value.enabled : fallback.enabled,
     provider: normalizeVoiceRepliesProvider(value.provider, fallback.provider),
     voiceId: normalizeSelectedAgentId(value.voiceId, fallback.voiceId),
     speed: normalizeVoiceReplySpeed(value.speed, fallback.speed),
@@ -949,7 +1047,7 @@ const normalizeVoiceRepliesPreference = (
 };
 
 const normalizeVoiceReplies = (
-  value: unknown
+  value: unknown,
 ): Record<string, StudioVoiceRepliesPreference> => {
   if (!isRecord(value)) return {};
   const voiceReplies: Record<string, StudioVoiceRepliesPreference> = {};
@@ -963,7 +1061,7 @@ const normalizeVoiceReplies = (
 
 const normalizeOfficePreference = (
   value: unknown,
-  fallback: StudioOfficePreference = defaultStudioOfficePreference()
+  fallback: StudioOfficePreference = defaultStudioOfficePreference(),
 ): StudioOfficePreference => {
   if (!isRecord(value)) return fallback;
   return {
@@ -978,35 +1076,47 @@ const normalizeOfficePreference = (
     ),
     remoteOfficeLabel: normalizeRemoteOfficeLabel(
       value.remoteOfficeLabel,
-      fallback.remoteOfficeLabel
+      fallback.remoteOfficeLabel,
     ),
     remoteOfficePresenceUrl: normalizeRemoteOfficePresenceUrl(
       value.remoteOfficePresenceUrl ?? value.remoteOfficeUrl,
     ),
-    remoteOfficeGatewayUrl: normalizeRemoteOfficeGatewayUrl(value.remoteOfficeGatewayUrl),
+    remoteOfficeGatewayUrl: normalizeRemoteOfficeGatewayUrl(
+      value.remoteOfficeGatewayUrl,
+    ),
     remoteOfficeToken:
       value.remoteOfficeToken === null
         ? ""
         : coerceString(value.remoteOfficeToken) || fallback.remoteOfficeToken,
-    companyName: normalizeCompanyField(value.companyName ?? fallback.companyName),
-    companyPrompt: normalizeCompanyField(value.companyPrompt ?? fallback.companyPrompt),
-    companyImprovedBrief: normalizeCompanyField(
-      value.companyImprovedBrief ?? fallback.companyImprovedBrief
+    companyName: normalizeCompanyField(
+      value.companyName ?? fallback.companyName,
     ),
-    companySummary: normalizeCompanyField(value.companySummary ?? fallback.companySummary),
+    companyPrompt: normalizeCompanyField(
+      value.companyPrompt ?? fallback.companyPrompt,
+    ),
+    companyImprovedBrief: normalizeCompanyField(
+      value.companyImprovedBrief ?? fallback.companyImprovedBrief,
+    ),
+    companySummary: normalizeCompanyField(
+      value.companySummary ?? fallback.companySummary,
+    ),
     companyGeneratedAt: normalizeOptionalIsoString(
       value.companyGeneratedAt,
-      fallback.companyGeneratedAt
+      fallback.companyGeneratedAt,
     ),
     companyRoleTitles: normalizeCompanyRoleTitles(
       value.companyRoleTitles,
-      fallback.companyRoleTitles
+      fallback.companyRoleTitles,
     ),
-    companyPlanJson: normalizeCompanyField(value.companyPlanJson ?? fallback.companyPlanJson),
+    companyPlanJson: normalizeCompanyField(
+      value.companyPlanJson ?? fallback.companyPlanJson,
+    ),
   };
 };
 
-const normalizeOffice = (value: unknown): Record<string, StudioOfficePreference> => {
+const normalizeOffice = (
+  value: unknown,
+): Record<string, StudioOfficePreference> => {
   if (!isRecord(value)) return {};
   const office: Record<string, StudioOfficePreference> = {};
   for (const [gatewayKeyRaw, officeRaw] of Object.entries(value)) {
@@ -1075,7 +1185,7 @@ export const sanitizeStandupPreference = (
 });
 
 export const sanitizeTaskBoardPreference = (
-  value: StudioTaskBoardPreference
+  value: StudioTaskBoardPreference,
 ): StudioTaskBoardPreferencePublic => ({
   cards: value.cards.map((card) => ({ ...card, notes: [...card.notes] })),
   selectedCardId: value.selectedCardId,
@@ -1133,10 +1243,12 @@ export const normalizeStudioSettings = (raw: unknown): StudioSettings => {
 
 export const mergeStudioSettings = (
   current: StudioSettings,
-  patch: StudioSettingsPatch
+  patch: StudioSettingsPatch,
 ): StudioSettings => {
   const nextGateway =
-    patch.gateway === undefined ? current.gateway : mergeGatewaySettings(current.gateway, patch.gateway);
+    patch.gateway === undefined
+      ? current.gateway
+      : mergeGatewaySettings(current.gateway, patch.gateway);
   const nextFocused = { ...current.focused };
   const nextAvatars = { ...current.avatars };
   const nextDeskAssignments = { ...current.deskAssignments };
@@ -1166,7 +1278,9 @@ export const mergeStudioSettings = (
         continue;
       }
       if (!isRecord(gatewayPatch)) continue;
-      const existing = nextAvatars[gatewayKey] ? { ...nextAvatars[gatewayKey] } : {};
+      const existing = nextAvatars[gatewayKey]
+        ? { ...nextAvatars[gatewayKey] }
+        : {};
       for (const [agentIdRaw, avatarPatchRaw] of Object.entries(gatewayPatch)) {
         const agentId = coerceString(agentIdRaw);
         if (!agentId) continue;
@@ -1174,13 +1288,18 @@ export const mergeStudioSettings = (
           delete existing[agentId];
           continue;
         }
-        existing[agentId] = normalizeAgentAvatarProfile(avatarPatchRaw, agentId);
+        existing[agentId] = normalizeAgentAvatarProfile(
+          avatarPatchRaw,
+          agentId,
+        );
       }
       nextAvatars[gatewayKey] = existing;
     }
   }
   if (patch.deskAssignments) {
-    for (const [gatewayKeyRaw, gatewayPatch] of Object.entries(patch.deskAssignments)) {
+    for (const [gatewayKeyRaw, gatewayPatch] of Object.entries(
+      patch.deskAssignments,
+    )) {
       const gatewayKey = normalizeGatewayKey(gatewayKeyRaw);
       if (!gatewayKey) continue;
       if (gatewayPatch === null) {
@@ -1191,7 +1310,9 @@ export const mergeStudioSettings = (
       const existing = nextDeskAssignments[gatewayKey]
         ? { ...nextDeskAssignments[gatewayKey] }
         : {};
-      for (const [deskUidRaw, agentIdPatchRaw] of Object.entries(gatewayPatch)) {
+      for (const [deskUidRaw, agentIdPatchRaw] of Object.entries(
+        gatewayPatch,
+      )) {
         const deskUid = coerceString(deskUidRaw);
         if (!deskUid) continue;
         if (agentIdPatchRaw === null) {
@@ -1209,14 +1330,17 @@ export const mergeStudioSettings = (
     }
   }
   if (patch.analytics) {
-    for (const [gatewayKeyRaw, analyticsPatch] of Object.entries(patch.analytics)) {
+    for (const [gatewayKeyRaw, analyticsPatch] of Object.entries(
+      patch.analytics,
+    )) {
       const gatewayKey = normalizeGatewayKey(gatewayKeyRaw);
       if (!gatewayKey) continue;
       if (analyticsPatch === null) {
         delete nextAnalytics[gatewayKey];
         continue;
       }
-      const fallback = nextAnalytics[gatewayKey] ?? defaultStudioAnalyticsPreference();
+      const fallback =
+        nextAnalytics[gatewayKey] ?? defaultStudioAnalyticsPreference();
       nextAnalytics[gatewayKey] = normalizeAnalyticsPreference(
         {
           ...fallback,
@@ -1226,12 +1350,14 @@ export const mergeStudioSettings = (
             ...(isRecord(analyticsPatch.budgets) ? analyticsPatch.budgets : {}),
           },
         },
-        fallback
+        fallback,
       );
     }
   }
   if (patch.voiceReplies) {
-    for (const [gatewayKeyRaw, voiceRepliesPatch] of Object.entries(patch.voiceReplies)) {
+    for (const [gatewayKeyRaw, voiceRepliesPatch] of Object.entries(
+      patch.voiceReplies,
+    )) {
       const gatewayKey = normalizeGatewayKey(gatewayKeyRaw);
       if (!gatewayKey) continue;
       if (voiceRepliesPatch === null) {
@@ -1245,7 +1371,7 @@ export const mergeStudioSettings = (
           ...fallback,
           ...voiceRepliesPatch,
         },
-        fallback
+        fallback,
       );
     }
   }
@@ -1257,13 +1383,14 @@ export const mergeStudioSettings = (
         delete nextOffice[gatewayKey];
         continue;
       }
-      const fallback = nextOffice[gatewayKey] ?? defaultStudioOfficePreference();
+      const fallback =
+        nextOffice[gatewayKey] ?? defaultStudioOfficePreference();
       nextOffice[gatewayKey] = normalizeOfficePreference(
         {
           ...fallback,
           ...officePatch,
         },
-        fallback
+        fallback,
       );
     }
   }
@@ -1279,7 +1406,9 @@ export const mergeStudioSettings = (
         nextStandup[gatewayKey] ?? defaultStudioStandupPreference();
       const nextManualByAgentId = { ...fallback.manualByAgentId };
       if (standupPatch.manualByAgentId) {
-        for (const [agentIdRaw, entryPatch] of Object.entries(standupPatch.manualByAgentId)) {
+        for (const [agentIdRaw, entryPatch] of Object.entries(
+          standupPatch.manualByAgentId,
+        )) {
           const agentId = coerceString(agentIdRaw);
           if (!agentId) continue;
           if (entryPatch === null) {
@@ -1293,7 +1422,7 @@ export const mergeStudioSettings = (
               ...manualFallback,
               ...entryPatch,
             },
-            manualFallback
+            manualFallback,
           );
         }
       }
@@ -1311,12 +1440,14 @@ export const mergeStudioSettings = (
           },
           manualByAgentId: nextManualByAgentId,
         },
-        fallback
+        fallback,
       );
     }
   }
   if (patch.taskBoard) {
-    for (const [gatewayKeyRaw, taskBoardPatch] of Object.entries(patch.taskBoard)) {
+    for (const [gatewayKeyRaw, taskBoardPatch] of Object.entries(
+      patch.taskBoard,
+    )) {
       const gatewayKey = normalizeGatewayKey(gatewayKeyRaw);
       if (!gatewayKey) continue;
       if (taskBoardPatch === null) {
@@ -1333,7 +1464,7 @@ export const mergeStudioSettings = (
             ? taskBoardPatch.cards
             : fallback.cards,
         },
-        fallback
+        fallback,
       );
     }
   }
@@ -1353,7 +1484,7 @@ export const mergeStudioSettings = (
 
 export const resolveFocusedPreference = (
   settings: StudioSettings | StudioSettingsPublic,
-  gatewayUrl: string
+  gatewayUrl: string,
 ): StudioFocusedPreference | null => {
   const key = normalizeGatewayKey(gatewayUrl);
   if (!key) return null;
@@ -1363,7 +1494,7 @@ export const resolveFocusedPreference = (
 export const resolveAgentAvatarSeed = (
   settings: StudioSettings | StudioSettingsPublic,
   gatewayUrl: string,
-  agentId: string
+  agentId: string,
 ): string | null => {
   const profile = resolveAgentAvatarProfile(settings, gatewayUrl, agentId);
   return profile?.seed ?? null;
@@ -1372,7 +1503,7 @@ export const resolveAgentAvatarSeed = (
 export const resolveAgentAvatarProfile = (
   settings: StudioSettings | StudioSettingsPublic,
   gatewayUrl: string,
-  agentId: string
+  agentId: string,
 ): AgentAvatarProfile | null => {
   const gatewayKey = normalizeGatewayKey(gatewayUrl);
   if (!gatewayKey) return null;
@@ -1383,7 +1514,7 @@ export const resolveAgentAvatarProfile = (
 
 export const resolveDeskAssignments = (
   settings: StudioSettings | StudioSettingsPublic,
-  gatewayUrl: string
+  gatewayUrl: string,
 ): StudioDeskAssignments => {
   const gatewayKey = normalizeGatewayKey(gatewayUrl);
   if (!gatewayKey) return {};
@@ -1392,7 +1523,7 @@ export const resolveDeskAssignments = (
 
 export const resolveAnalyticsPreference = (
   settings: StudioSettings | StudioSettingsPublic,
-  gatewayUrl: string
+  gatewayUrl: string,
 ): StudioAnalyticsPreference => {
   const gatewayKey = normalizeGatewayKey(gatewayUrl);
   if (!gatewayKey) return defaultStudioAnalyticsPreference();
@@ -1401,16 +1532,18 @@ export const resolveAnalyticsPreference = (
 
 export const resolveVoiceRepliesPreference = (
   settings: StudioSettings | StudioSettingsPublic,
-  gatewayUrl: string
+  gatewayUrl: string,
 ): StudioVoiceRepliesPreference => {
   const gatewayKey = normalizeGatewayKey(gatewayUrl);
   if (!gatewayKey) return defaultStudioVoiceRepliesPreference();
-  return settings.voiceReplies[gatewayKey] ?? defaultStudioVoiceRepliesPreference();
+  return (
+    settings.voiceReplies[gatewayKey] ?? defaultStudioVoiceRepliesPreference()
+  );
 };
 
 export const resolveOfficePreference = (
   settings: StudioSettings,
-  gatewayUrl: string
+  gatewayUrl: string,
 ): StudioOfficePreference => {
   const gatewayKey = normalizeGatewayKey(gatewayUrl);
   if (!gatewayKey) return defaultStudioOfficePreference();
@@ -1419,7 +1552,7 @@ export const resolveOfficePreference = (
 
 export const resolveOfficePreferencePublic = (
   settings: StudioSettingsPublic,
-  gatewayUrl: string
+  gatewayUrl: string,
 ): StudioOfficePreferencePublic => {
   const gatewayKey = normalizeGatewayKey(gatewayUrl);
   if (!gatewayKey) return defaultStudioOfficePreferencePublic();
@@ -1428,7 +1561,7 @@ export const resolveOfficePreferencePublic = (
 
 export const resolveStandupPreference = (
   settings: StudioSettings | StudioSettingsPublic,
-  gatewayUrl: string
+  gatewayUrl: string,
 ): StudioStandupPreference => {
   const gatewayKey = normalizeGatewayKey(gatewayUrl);
   if (!gatewayKey) return defaultStudioStandupPreference();
@@ -1437,7 +1570,7 @@ export const resolveStandupPreference = (
 
 export const resolveTaskBoardPreference = (
   settings: StudioSettings | StudioSettingsPublic,
-  gatewayUrl: string
+  gatewayUrl: string,
 ): StudioTaskBoardPreference => {
   const gatewayKey = normalizeGatewayKey(gatewayUrl);
   if (!gatewayKey) return defaultStudioTaskBoardPreference();

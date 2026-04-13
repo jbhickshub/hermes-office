@@ -20,13 +20,15 @@ type SettingsPanelProps = {
   officeTitleLoaded: boolean;
   onOfficeTitleChange: (title: string) => void;
   remoteOfficeEnabled: boolean;
-  remoteOfficeSourceKind: "presence_endpoint" | "openclaw_gateway";
+  remoteOfficeSourceKind: "presence_endpoint" | "hermes_gateway";
   remoteOfficeLabel: string;
   remoteOfficePresenceUrl: string;
   remoteOfficeGatewayUrl: string;
   remoteOfficeTokenConfigured: boolean;
   onRemoteOfficeEnabledChange: (enabled: boolean) => void;
-  onRemoteOfficeSourceKindChange: (kind: "presence_endpoint" | "openclaw_gateway") => void;
+  onRemoteOfficeSourceKindChange: (
+    kind: "presence_endpoint" | "hermes_gateway",
+  ) => void;
   onRemoteOfficeLabelChange: (label: string) => void;
   onRemoteOfficePresenceUrlChange: (url: string) => void;
   onRemoteOfficeGatewayUrlChange: (url: string) => void;
@@ -45,8 +47,8 @@ export function SettingsPanel({
   gatewayStatus,
   gatewayUrl,
   gatewayToken,
-  selectedAdapterType = "openclaw",
-  activeAdapterType = "openclaw",
+  selectedAdapterType = "hermes",
+  activeAdapterType = "hermes",
   onGatewayDisconnect,
   onGatewayConnect,
   onGatewayUrlChange,
@@ -96,7 +98,9 @@ export function SettingsPanel({
       <div className="rounded-lg border border-cyan-500/10 bg-black/20 px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] font-medium text-white">Studio title</div>
+            <div className="text-[11px] font-medium text-white">
+              Studio title
+            </div>
             <div className="mt-1 text-[10px] text-white/75">
               Customize the banner shown at the top of the office.
             </div>
@@ -111,7 +115,7 @@ export function SettingsPanel({
           maxLength={48}
           disabled={!officeTitleLoaded}
           onChange={(event) => onOfficeTitleChange(event.target.value)}
-          placeholder="Luke Headquarters"
+          placeholder="HERMES HQ"
           className="mt-3 w-full rounded-md border border-cyan-500/10 bg-black/25 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-cyan-100 outline-none transition-colors placeholder:text-cyan-100/30 focus:border-cyan-400/30 disabled:cursor-not-allowed disabled:opacity-50"
         />
         <div className="mt-2 text-[10px] text-white/50">
@@ -136,7 +140,6 @@ export function SettingsPanel({
               ["demo", "Demo"],
               ["hermes", "Hermes"],
               ["custom", "Custom"],
-              ["openclaw", "OpenClaw"],
             ] as const
           ).map(([adapterType, label]) => {
             const selected = selectedAdapterType === adapterType;
@@ -190,14 +193,13 @@ export function SettingsPanel({
           <span className="font-mono">
             Selected backend: {selectedAdapterType}
           </span>
-          <span className="font-mono">
-            Active backend: {activeAdapterType}
-          </span>
+          <span className="font-mono">Active backend: {activeAdapterType}</span>
           <span>Each backend keeps its own saved URL and token.</span>
         </div>
         <div className="mt-3 flex items-center justify-between gap-3">
           <div className="text-[10px] text-white/60">
-            Connect to apply the selected backend, or disconnect to return to the connection screen.
+            Connect to apply the selected backend, or disconnect to return to
+            the connection screen.
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -222,9 +224,12 @@ export function SettingsPanel({
       <div className="mt-3 rounded-lg border border-cyan-500/10 bg-black/20 px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] font-medium text-white">Remote office</div>
+            <div className="text-[11px] font-medium text-white">
+              Remote office
+            </div>
             <div className="mt-1 text-[10px] text-white/75">
-              Attach a second read-only office from either another Claw3D or a remote OpenClaw gateway.
+              Attach a second read-only office from either another Claw3D or a
+              remote Hermes gateway.
             </div>
           </div>
           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-cyan-200/70">
@@ -244,7 +249,9 @@ export function SettingsPanel({
               <span className="ui-switch-thumb" />
             </button>
             <div className="flex flex-col">
-              <span className="text-[11px] font-medium text-white">Show second office</span>
+              <span className="text-[11px] font-medium text-white">
+                Show second office
+              </span>
               <span className="text-[10px] text-white/80">
                 Remote agents stay visible but non-interactive.
               </span>
@@ -263,16 +270,19 @@ export function SettingsPanel({
               value={remoteOfficeSourceKind}
               onChange={(event) =>
                 onRemoteOfficeSourceKindChange(
-                  event.target.value as "presence_endpoint" | "openclaw_gateway"
+                  event.target.value as "presence_endpoint" | "hermes_gateway",
                 )
               }
               className="w-full rounded-md border border-cyan-500/10 bg-black/25 px-3 py-2 text-[11px] text-cyan-100 outline-none transition-colors focus:border-cyan-400/30"
             >
-              <option value="presence_endpoint">Remote Claw3D presence endpoint</option>
-              <option value="openclaw_gateway">Remote OpenClaw gateway</option>
+              <option value="presence_endpoint">
+                Remote Claw3D presence endpoint
+              </option>
+              <option value="hermes_gateway">Remote Hermes gateway</option>
             </select>
             <div className="mt-1 text-[10px] text-white/50">
-              Use a presence endpoint when the other machine runs Claw3D. Use gateway mode when the other machine only runs OpenClaw.
+              Use a presence endpoint when the other machine runs Claw3D. Use
+              gateway mode when the other machine only runs Hermes.
             </div>
           </div>
           <div>
@@ -283,7 +293,9 @@ export function SettingsPanel({
               type="text"
               value={remoteOfficeLabel}
               maxLength={48}
-              onChange={(event) => onRemoteOfficeLabelChange(event.target.value)}
+              onChange={(event) =>
+                onRemoteOfficeLabelChange(event.target.value)
+              }
               placeholder="Remote Office"
               className="w-full rounded-md border border-cyan-500/10 bg-black/25 px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-cyan-100 outline-none transition-colors placeholder:text-cyan-100/30 focus:border-cyan-400/30"
             />
@@ -297,12 +309,15 @@ export function SettingsPanel({
                 <input
                   type="url"
                   value={remoteOfficePresenceUrl}
-                  onChange={(event) => onRemoteOfficePresenceUrlChange(event.target.value)}
+                  onChange={(event) =>
+                    onRemoteOfficePresenceUrlChange(event.target.value)
+                  }
                   placeholder="https://other-office.example.com/api/office/presence"
                   className="w-full rounded-md border border-cyan-500/10 bg-black/25 px-3 py-2 text-[11px] text-cyan-100 outline-none transition-colors placeholder:text-cyan-100/30 focus:border-cyan-400/30"
                 />
                 <div className="mt-1 text-[10px] text-white/50">
-                  Studio polls this endpoint server-side when the other machine is also running Claw3D.
+                  Studio polls this endpoint server-side when the other machine
+                  is also running Claw3D.
                 </div>
               </div>
               <div>
@@ -313,8 +328,14 @@ export function SettingsPanel({
                   <input
                     type="password"
                     value={remoteOfficeTokenDraft}
-                    onChange={(event) => setRemoteOfficeTokenDraft(event.target.value)}
-                    placeholder={remoteOfficeTokenConfigured ? "Token configured. Enter a new one to replace it." : "Enter token"}
+                    onChange={(event) =>
+                      setRemoteOfficeTokenDraft(event.target.value)
+                    }
+                    placeholder={
+                      remoteOfficeTokenConfigured
+                        ? "Token configured. Enter a new one to replace it."
+                        : "Enter token"
+                    }
                     className="min-w-0 flex-1 rounded-md border border-cyan-500/10 bg-black/25 px-3 py-2 text-[11px] text-cyan-100 outline-none transition-colors placeholder:text-cyan-100/30 focus:border-cyan-400/30"
                   />
                   <button
@@ -351,12 +372,15 @@ export function SettingsPanel({
                 <input
                   type="text"
                   value={remoteOfficeGatewayUrl}
-                  onChange={(event) => onRemoteOfficeGatewayUrlChange(event.target.value)}
+                  onChange={(event) =>
+                    onRemoteOfficeGatewayUrlChange(event.target.value)
+                  }
                   placeholder="wss://remote-gateway.example.com"
                   className="w-full rounded-md border border-cyan-500/10 bg-black/25 px-3 py-2 text-[11px] text-cyan-100 outline-none transition-colors placeholder:text-cyan-100/30 focus:border-cyan-400/30"
                 />
                 <div className="mt-1 text-[10px] text-white/50">
-                  Claw3D connects from the browser directly to the remote OpenClaw gateway and derives a read-only presence snapshot.
+                  Claw3D connects from the browser directly to the remote Hermes
+                  gateway and derives a read-only presence snapshot.
                 </div>
               </div>
               <div>
@@ -367,8 +391,14 @@ export function SettingsPanel({
                   <input
                     type="password"
                     value={remoteOfficeTokenDraft}
-                    onChange={(event) => setRemoteOfficeTokenDraft(event.target.value)}
-                    placeholder={remoteOfficeTokenConfigured ? "Token configured. Enter a new one to replace it." : "Enter token"}
+                    onChange={(event) =>
+                      setRemoteOfficeTokenDraft(event.target.value)
+                    }
+                    placeholder={
+                      remoteOfficeTokenConfigured
+                        ? "Token configured. Enter a new one to replace it."
+                        : "Enter token"
+                    }
                     className="min-w-0 flex-1 rounded-md border border-cyan-500/10 bg-black/25 px-3 py-2 text-[11px] text-cyan-100 outline-none transition-colors placeholder:text-cyan-100/30 focus:border-cyan-400/30"
                   />
                   <button
@@ -395,7 +425,9 @@ export function SettingsPanel({
                   ) : null}
                 </div>
                 <div className="mt-1 text-[10px] text-white/50">
-                  Optional. Browser-based remote presence and messaging can work without it when the remote gateway already allows your Control UI origin.
+                  Optional. Browser-based remote presence and messaging can work
+                  without it when the remote gateway already allows your Control
+                  UI origin.
                 </div>
               </div>
             </>
@@ -433,14 +465,20 @@ export function SettingsPanel({
             <span className="ui-switch-thumb" />
           </button>
           <div className="flex flex-col">
-            <span className="text-[11px] font-medium text-white">Voice replies</span>
+            <span className="text-[11px] font-medium text-white">
+              Voice replies
+            </span>
             <span className="text-[10px] text-white/80">
               Play finalized assistant replies with a natural voice.
             </span>
           </div>
         </div>
         <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-cyan-200/70">
-          {voiceRepliesLoaded ? (voiceRepliesEnabled ? "On" : "Off") : "Loading"}
+          {voiceRepliesLoaded
+            ? voiceRepliesEnabled
+              ? "On"
+              : "Off"
+            : "Loading"}
         </span>
       </div>
       <div className="mt-3 rounded-lg border border-cyan-500/10 bg-black/20 px-4 py-3">
@@ -467,7 +505,9 @@ export function SettingsPanel({
                 }`}
               >
                 <div className="text-[11px] font-medium">{voice.label}</div>
-                <div className="mt-1 text-[10px] text-white/65">{voice.description}</div>
+                <div className="mt-1 text-[10px] text-white/65">
+                  {voice.description}
+                </div>
               </button>
             );
           })}

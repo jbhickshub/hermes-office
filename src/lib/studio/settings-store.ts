@@ -18,7 +18,6 @@ import {
 // storage and document any changes to this threat model in README.md and SECURITY.md.
 const SETTINGS_DIRNAME = "claw3d";
 const SETTINGS_FILENAME = "settings.json";
-const OPENCLAW_CONFIG_FILENAME = "openclaw.json";
 const DEFAULT_LOCAL_GATEWAY_PORT = 18789;
 
 export const resolveStudioSettingsPath = () =>
@@ -41,37 +40,9 @@ const buildGatewaySettings = (params: {
 
 const buildLocalProfile = (url: string, token = ""): StudioGatewayProfile => ({ url, token });
 
-const readOpenclawGatewayDefaults = (): StudioGatewaySettings | null => {
-  try {
-    const configPath = path.join(resolveStateDir(), OPENCLAW_CONFIG_FILENAME);
-    if (!fs.existsSync(configPath)) return null;
-    const raw = fs.readFileSync(configPath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-    if (!isRecord(parsed)) return null;
-    const gateway = isRecord(parsed.gateway) ? parsed.gateway : null;
-    if (!gateway) return null;
-    const auth = isRecord(gateway.auth) ? gateway.auth : null;
-    const token = typeof auth?.token === "string" ? auth.token.trim() : "";
-    const port = typeof gateway.port === "number" && Number.isFinite(gateway.port) ? gateway.port : null;
-    if (!token) return null;
-    const url = port ? `ws://localhost:${port}` : `ws://localhost:${DEFAULT_LOCAL_GATEWAY_PORT}`;
-    if (!url) return null;
-    return buildGatewaySettings({
-      adapterType: "openclaw",
-      url,
-      token,
-      profiles: {
-        openclaw: buildLocalProfile(url, token),
-      },
-    });
-  } catch {
-    return null;
-  }
-};
-
 const normalizeAdapterType = (value: string | undefined): StudioGatewayAdapterType | null => {
   const normalized = value?.trim().toLowerCase();
-  if (normalized === "openclaw" || normalized === "hermes" || normalized === "demo" || normalized === "custom") {
+  if (normalized === "hermes" || normalized === "demo" || normalized === "custom") {
     return normalized;
   }
   return null;
@@ -92,7 +63,7 @@ const buildEnvGatewayDefaults = (): StudioGatewaySettings | null => {
   const envUrl = process.env.CLAW3D_GATEWAY_URL?.trim();
   const envToken = process.env.CLAW3D_GATEWAY_TOKEN?.trim() ?? "";
   const envAdapterType =
-    normalizeAdapterType(process.env.CLAW3D_GATEWAY_ADAPTER_TYPE) ?? "openclaw";
+    normalizeAdapterType(process.env.CLAW3D_GATEWAY_ADAPTER_TYPE) ?? "hermes";
 
   const hermesProfile = readPortBasedGatewayProfile("hermes", "HERMES_ADAPTER_PORT");
   const demoProfile = readPortBasedGatewayProfile("demo", "DEMO_ADAPTER_PORT");
@@ -147,15 +118,9 @@ const mergeGatewayProfiles = (
 };
 
 export const loadLocalGatewayDefaults = (): StudioGatewaySettings | null => {
-  const fromFile = readOpenclawGatewayDefaults();
-  const fromEnv = buildEnvGatewayDefaults();
-  if (fromFile) {
-    return mergeGatewayProfiles(fromFile, fromEnv);
-  }
-  // Fall back to env vars so operators can configure the gateway URL at
-  // runtime without openclaw.json and without a rebuild. If no explicit
-  // URL is provided, also expose local Hermes/Demo adapter ports when set.
-  return fromEnv;
+  // Load gateway defaults from env vars. Expose local Hermes/Demo adapter
+  // ports when set so operators can configure the gateway URL at runtime.
+  return buildEnvGatewayDefaults();
 };
 
 export const loadStudioSettings = (): StudioSettings => {

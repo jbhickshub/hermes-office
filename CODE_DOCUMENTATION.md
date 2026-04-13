@@ -6,9 +6,9 @@ Use it alongside `README.md` for setup and `ARCHITECTURE.md` for system boundari
 
 ## Repo Mental Model
 
-Claw3D is the UI and local Studio/proxy layer around an existing OpenClaw Gateway.
+Claw3D is the UI and local Studio/proxy layer around an existing Hermes Gateway.
 
-- OpenClaw owns agent execution, sessions, tools, config, and runtime events.
+- Hermes owns agent execution, sessions, tools, config, and runtime events.
 - Claw3D owns visualization, local Studio settings, UI workflows, office rendering, and the same-origin WebSocket/API bridge.
 - When a feature needs authoritative runtime state, prefer Gateway data over local UI state.
 - When a feature is only a local preference, it usually belongs in Studio settings.
@@ -50,7 +50,7 @@ If a module is reused by more than one feature or represents a stable domain con
 Custom Studio server and WebSocket proxy.
 
 - `server/index.js` boots the app.
-- `server/gateway-proxy.js` bridges browser WebSocket traffic to the upstream OpenClaw Gateway.
+- `server/gateway-proxy.js` bridges browser WebSocket traffic to the upstream Hermes Gateway.
 - `server/studio-settings.js` loads the local Studio gateway settings on the server side.
 
 This layer exists so gateway credentials stay server-side and browser traffic can always target the same-origin Studio server.
@@ -68,7 +68,7 @@ For architecture-sensitive changes, read the nearest unit tests before editing t
 
 Repository utilities and generated-asset workflows.
 
-- `scripts/sync-openclaw-gateway-client.ts` updates the vendored gateway client helpers.
+- `scripts/sync-hermes-gateway-client.ts` updates the vendored gateway client helpers.
 - `scripts/studio-setup.js` prepares common local Studio prerequisites.
 
 ## Read These First
@@ -91,7 +91,7 @@ If you are new to the codebase, this order gives the fastest payoff:
 At a high level:
 
 1. The browser connects to Studio at `/api/gateway/ws`.
-2. Studio proxies that connection to the upstream OpenClaw Gateway.
+2. Studio proxies that connection to the upstream Hermes Gateway.
 3. `GatewayClient` receives runtime events.
 4. `src/app/office/page.tsx` installs the main runtime subscription.
 5. `gatewayRuntimeEventHandler.ts` classifies and routes runtime events.
@@ -295,15 +295,15 @@ A few patterns are used repeatedly in the repo:
 - Studio settings are local and per-workspace/gateway. Use them for UI preferences, desk assignments, and connection details only.
 - Transport-specific session keys such as Telegram sessions still need to map back to the correct agent. Reuse session-key helpers instead of writing ad-hoc parsing.
 - The immersive retro office now uses procedural furniture geometry instead of bundled third-party model assets.
-- This repo is not the OpenClaw runtime. Do not modify upstream OpenClaw source code from here.
+- This repo is not the Hermes runtime. Do not modify upstream Hermes source code from here.
 
-## When You Need Upstream OpenClaw Context
+## When You Need Upstream Hermes Context
 
 Sometimes Claw3D behavior depends on the upstream event contract or session behavior. In those cases:
 
 1. Inspect the relevant client or gateway contract in `src/lib/gateway`.
-2. If the answer is not in this repo, inspect your separate local OpenClaw checkout.
-3. Apply changes in Claw3D unless the user explicitly asked for upstream OpenClaw work.
+2. If the answer is not in this repo, inspect your separate local Hermes checkout.
+3. Apply changes in Claw3D unless the user explicitly asked for upstream Hermes work.
 
 ## Documentation Philosophy
 

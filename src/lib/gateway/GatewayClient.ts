@@ -5,7 +5,7 @@ import {
   GatewayBrowserClient,
   clearGatewayBrowserSessionStorage,
   type GatewayHelloOk,
-} from "./openclaw/GatewayBrowserClient";
+} from "./protocol/GatewayBrowserClient";
 import type {
   StudioGatewayProfilePublic,
   StudioGatewayAdapterType,
@@ -20,7 +20,7 @@ import type {
 } from "@/lib/studio/coordinator";
 import { resolveStudioProxyGatewayUrl } from "@/lib/gateway/proxy-url";
 import { ensureGatewayReloadModeHotForLocalStudio } from "@/lib/gateway/gatewayReloadMode";
-import { isLocalGatewayUrl } from "@/lib/gateway/local-gateway";
+
 import { GatewayResponseError } from "@/lib/gateway/errors";
 
 const gatewayDebugEnabled = process.env.NODE_ENV !== "production";
@@ -118,22 +118,17 @@ const DEFAULT_UPSTREAM_GATEWAY_URL =
 const DEFAULT_CUSTOM_RUNTIME_URL = "http://localhost:7770";
 const INITIAL_AUTO_CONNECT_DELAY_MS = 900;
 const INITIAL_CONNECT_RETRY_DELAY_MS = 1_200;
-const OPENCLAW_CONTROL_UI_CLIENT_ID = "openclaw-control-ui";
-const OPENCLAW_WEBCHAT_UI_CLIENT_ID = "webchat-ui";
+const HERMES_CONTROL_UI_CLIENT_ID = "hermes-control-ui";
+const HERMES_WEBCHAT_UI_CLIENT_ID = "webchat-ui";
 
 const isAutoManagedAdapter = (adapterType: StudioGatewayAdapterType) =>
   adapterType !== "custom";
 
 export const resolveGatewayClientName = (
-  adapterType: StudioGatewayAdapterType,
-  gatewayUrl: string
+  _adapterType: StudioGatewayAdapterType,
+  _gatewayUrl: string
 ) => {
-  if (adapterType !== "openclaw") {
-    return OPENCLAW_CONTROL_UI_CLIENT_ID;
-  }
-  return isLocalGatewayUrl(gatewayUrl)
-    ? OPENCLAW_CONTROL_UI_CLIENT_ID
-    : OPENCLAW_WEBCHAT_UI_CLIENT_ID;
+  return HERMES_CONTROL_UI_CLIENT_ID;
 };
 
 export const resolveInitialGatewayAutoConnectDelayMs = (
@@ -170,9 +165,8 @@ const resolveDefaultGatewayProfile = (
     case "custom":
       return { url: DEFAULT_CUSTOM_RUNTIME_URL, token: "" };
     case "demo":
-    case "hermes":
       return { url: "ws://localhost:18789", token: "" };
-    case "openclaw":
+    case "hermes":
     default:
       return {
         url: localDefaults?.url || DEFAULT_UPSTREAM_GATEWAY_URL,
@@ -200,10 +194,9 @@ const normalizeLocalGatewayDefaults = (value: unknown): StudioGatewaySettings | 
   const adapterType =
     raw.adapterType === "demo" ||
     raw.adapterType === "hermes" ||
-    raw.adapterType === "openclaw" ||
     raw.adapterType === "custom"
       ? raw.adapterType
-      : "openclaw";
+      : "hermes";
   const profiles = normalizeGatewayProfilesPublic(raw.profiles);
   return { url, token, adapterType, ...(profiles ? { profiles } : {}) };
 };
@@ -224,7 +217,7 @@ const normalizeGatewayProfilesPublic = (
   if (!value || typeof value !== "object") return undefined;
   const raw = value as Partial<Record<StudioGatewayAdapterType, StudioGatewayProfilePublic>>;
   const profiles: Partial<Record<StudioGatewayAdapterType, { url: string; token: string }>> = {};
-  for (const adapterType of ["openclaw", "hermes", "demo", "custom"] as const) {
+  for (const adapterType of ["hermes", "demo", "custom"] as const) {
     const profile = normalizeGatewayProfilePublic(raw[adapterType]);
     if (profile) {
       profiles[adapterType] = profile;
@@ -542,19 +535,19 @@ export const syncGatewaySessionSettings = async ({
 };
 
 const doctorFixHint =
-  "Run `npx openclaw doctor --fix` on the gateway host (or `pnpm openclaw doctor --fix` in a source checkout).";
+  "Check the gateway host configuration and restart the gateway.";
 
 const protocolMismatchHint =
-  "This gateway looks too old for Claw3D's protocol v3. Upgrade OpenClaw, use the Hermes adapter, or run `npm run demo-gateway` for a no-framework office demo.";
+  "This gateway looks too old for Claw3D's protocol v3. Upgrade the Hermes adapter or run `npm run demo-gateway` for a no-framework office demo.";
 
 const tailscaleGatewayHint =
-  "If this is a remote OpenClaw/Tailscale gateway, confirm the Studio host can reach the `wss://...` address and approve the first device pairing on the gateway host with `openclaw devices approve --latest`.";
+  "If this is a remote Hermes/Tailscale gateway, confirm the Studio host can reach the `wss://...` address.";
 
 const pairingRequiredHint =
-  "This gateway is asking for first-time device approval. Run `openclaw devices approve --latest` on the gateway host, then restart Claw3D and reconnect from this browser.";
+  "This gateway is asking for first-time device approval. Approve the device on the gateway host, then restart Claw3D and reconnect from this browser.";
 
 const requiresDeviceIdentityHint =
-  "This gateway rejected the client as a control UI without device identity. For remote OpenClaw/Tailscale connections, update to the latest Claw3D build and approve the device pairing on the gateway host.";
+  "This gateway rejected the client as a control UI without device identity. Update to the latest Claw3D build and approve the device pairing on the gateway host.";
 
 const isGatewayProtocolMismatchError = (error: GatewayResponseError) => {
   if (error.code.trim().toUpperCase() !== "INVALID_REQUEST") return false;
@@ -587,7 +580,7 @@ const formatGatewayError = (error: unknown) => {
   }
   if (error instanceof Error) {
     if (/timed out connecting to the gateway/i.test(error.message)) {
-      return `${error.message} If you are testing locally, an older OpenClaw build may be speaking an incompatible protocol. Try upgrading OpenClaw, using the Hermes adapter, or running \`npm run demo-gateway\`.`;
+      return `${error.message} If you are testing locally, the gateway may be speaking an incompatible protocol. Try upgrading the Hermes adapter or running \`npm run demo-gateway\`.`;
     }
     return error.message;
   }
@@ -716,7 +709,7 @@ export const useGatewayConnection = (
   const [gatewayUrl, setGatewayUrl] = useState(DEFAULT_UPSTREAM_GATEWAY_URL);
   const [token, setToken] = useState("");
   const [selectedAdapterType, setSelectedAdapterTypeState] =
-    useState<StudioGatewayAdapterType>("openclaw");
+    useState<StudioGatewayAdapterType>("hermes");
   const [adapterProfiles, setAdapterProfiles] = useState<
     Partial<Record<StudioGatewayAdapterType, { url: string; token: string }>>
   >({});
@@ -772,16 +765,15 @@ export const useGatewayConnection = (
                     ? gateway.lastKnownGood.token
                     : "",
                 adapterType:
-                  gateway.lastKnownGood.adapterType === "demo" ||
                   gateway.lastKnownGood.adapterType === "hermes" ||
-                  gateway.lastKnownGood.adapterType === "openclaw" ||
+                  gateway.lastKnownGood.adapterType === "demo" ||
                   gateway.lastKnownGood.adapterType === "custom"
                     ? gateway.lastKnownGood.adapterType
-                    : "openclaw",
+                    : "hermes",
               }
             : null;
         // When the user has no saved gateway URL, prefer the runtime
-        // localGatewayDefaults (from openclaw.json, CLAW3D_GATEWAY_URL,
+        // localGatewayDefaults (from CLAW3D_GATEWAY_URL,
         // or detected local Hermes/demo adapter ports)
         // over the build-time NEXT_PUBLIC_GATEWAY_URL which may be stale
         // or empty if the operator forgot to rebuild after .env changes.
@@ -790,16 +782,15 @@ export const useGatewayConnection = (
           hasSavedUrl && gateway && "adapterType" in gateway && typeof gateway.adapterType === "string"
             ? ((gateway.adapterType === "demo" ||
                 gateway.adapterType === "hermes" ||
-                gateway.adapterType === "openclaw" ||
                 gateway.adapterType === "custom"
                 ? gateway.adapterType
-                : "openclaw") as StudioGatewayAdapterType)
+                : "hermes") as StudioGatewayAdapterType)
             : null;
         const nextAdapterType =
           savedAdapterType ??
           lastKnownGood?.adapterType ??
           normalizedDefaults?.adapterType ??
-          "openclaw";
+          "hermes";
         const lastKnownGoodForSelectedAdapter =
           lastKnownGood?.adapterType === nextAdapterType ? lastKnownGood : null;
         const resolvedUrl = hasSavedUrl
@@ -857,7 +848,7 @@ export const useGatewayConnection = (
             loadedGatewaySettings.current = {
               gatewayUrl: DEFAULT_UPSTREAM_GATEWAY_URL.trim(),
               token: "",
-              adapterType: "openclaw",
+              adapterType: "hermes",
               profiles: undefined,
               hasLastKnownGood: false,
             };
@@ -953,7 +944,7 @@ export const useGatewayConnection = (
             token,
             authScopeKey: gatewayUrl,
             clientName: resolveGatewayClientName(selectedAdapterType, gatewayUrl),
-            disableDeviceAuth: selectedAdapterType !== "openclaw",
+            disableDeviceAuth: true,
           });
           lastError = null;
           break;
@@ -983,12 +974,11 @@ export const useGatewayConnection = (
       });
       const hello = client.getLastHello();
       const nextDetectedAdapterType =
-        hello?.adapterType === "demo" ||
         hello?.adapterType === "hermes" ||
-        hello?.adapterType === "openclaw" ||
+        hello?.adapterType === "demo" ||
         hello?.adapterType === "custom"
           ? hello.adapterType
-          : "openclaw";
+          : "hermes";
       setDetectedAdapterType(nextDetectedAdapterType);
       setHasLastKnownGoodState(nextDetectedAdapterType === selectedAdapterType);
       settingsCoordinator.schedulePatch({
@@ -1198,7 +1188,7 @@ export const useGatewayConnection = (
     (selectedAdapterType === "custom" ||
       !hasLastKnownGoodState ||
       !gatewayUrl.trim() ||
-      (selectedAdapterType === "openclaw" && !token.trim()) ||
+      (selectedAdapterType === "hermes" && !token.trim()) ||
       wasManualDisconnectRef.current ||
       Boolean(error));
 

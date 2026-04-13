@@ -70,7 +70,7 @@ test-results
 /.agent/execplan-pending.md
 /.agent/*.local.md
 /.agent/future-plans
-/.openclaw
+/.hermes
 /.clawdbot
 /.moltbot
 /agent-canvas

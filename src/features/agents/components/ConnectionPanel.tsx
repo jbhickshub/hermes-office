@@ -51,10 +51,6 @@ export const ConnectionPanel = ({
   const applyCustomPreset = () => {
     onAdapterTypeChange("custom");
   };
-  const applyOpenClawPreset = () => {
-    onAdapterTypeChange("openclaw");
-  };
-
   return (
     <div className="fade-up-delay flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -137,13 +133,6 @@ export const ConnectionPanel = ({
           onClick={applyCustomPreset}
         >
           Custom backend
-        </button>
-        <button
-          className="ui-btn-secondary px-3 py-1.5 text-[11px] font-semibold tracking-[0.05em]"
-          type="button"
-          onClick={applyOpenClawPreset}
-        >
-          OpenClaw backend
         </button>
       </div>
       {error ? (

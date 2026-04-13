@@ -1,7 +1,7 @@
 ---
 name: soundclaw
 description: Control Spotify playback, search music, and return shareable music links.
-metadata: {"openclaw":{"skillKey":"soundclaw"}}
+metadata: {"hermes":{"skillKey":"soundclaw"}}
 ---
 
 # SOUNDCLAW
@@ -45,9 +45,9 @@ When this skill is activated, the agent should walk to the office jukebox before
 
 ---
 
-## OpenClaw Gateway Skill Contract
+## Hermes Gateway Skill Contract
 
-> This section is for developers implementing the backend skill handler in OpenClaw.
+> This section is for developers implementing the backend skill handler in Hermes.
 > The Claw3D UI handles authentication via Spotify PKCE OAuth in the browser.
 > The gateway skill handles agent-driven requests via the `soundclaw.*` RPC namespace.
 

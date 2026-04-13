@@ -167,7 +167,7 @@ function createGatewayProxy(options) {
     let upstreamReady = false;
     let upstreamUrl = "";
     let upstreamToken = "";
-    let upstreamAdapterType = "openclaw";
+    let upstreamAdapterType = "hermes";
     let connectRequestId = null;
     let connectResponseSent = false;
     let pendingConnectFrame = null;
@@ -212,7 +212,7 @@ function createGatewayProxy(options) {
         hasNonEmptyDeviceToken(frame.params) ||
         hasCompleteDeviceAuth(frame.params);
 
-      const requiresToken = upstreamAdapterType === "openclaw";
+      const requiresToken = upstreamAdapterType === "hermes";
       if (requiresToken && !upstreamToken && !browserHasAuth) {
         sendConnectError(
           "studio.gateway_token_missing",
@@ -247,7 +247,7 @@ function createGatewayProxy(options) {
         upstreamAdapterType =
           typeof settings?.adapterType === "string" && settings.adapterType.trim()
             ? settings.adapterType.trim().toLowerCase()
-            : "openclaw";
+            : "hermes";
       } catch (err) {
         logError("Failed to load upstream gateway settings.", err);
         pendingUpstreamSetupError = {

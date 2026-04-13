@@ -116,7 +116,9 @@ describe("studio settings normalization", () => {
       },
     });
 
-    expect(normalized.avatars["ws://localhost:18789"]?.["agent-1"]?.seed).toBe("seed-1");
+    expect(normalized.avatars["ws://localhost:18789"]?.["agent-1"]?.seed).toBe(
+      "seed-1",
+    );
   });
 
   it("merges avatar patches", () => {
@@ -140,8 +142,12 @@ describe("studio settings normalization", () => {
       },
     });
 
-    expect(merged.avatars["ws://localhost:18789"]?.["agent-1"]?.seed).toBe("seed-2");
-    expect(merged.avatars["ws://localhost:18789"]?.["agent-2"]?.seed).toBe("seed-3");
+    expect(merged.avatars["ws://localhost:18789"]?.["agent-1"]?.seed).toBe(
+      "seed-2",
+    );
+    expect(merged.avatars["ws://localhost:18789"]?.["agent-2"]?.seed).toBe(
+      "seed-3",
+    );
   });
 
   it("normalizes office title preferences per gateway", () => {
@@ -163,7 +169,7 @@ describe("studio settings normalization", () => {
     );
     expect(normalized.office.bad).toEqual(
       expect.objectContaining({
-        title: "Luke Headquarters",
+        title: "HERMES HQ",
       }),
     );
   });
@@ -172,7 +178,7 @@ describe("studio settings normalization", () => {
     const current = normalizeStudioSettings({
       office: {
         "ws://localhost:18789": {
-          title: "Luke Headquarters",
+          title: "HERMES HQ",
         },
       },
     });
@@ -201,7 +207,7 @@ describe("studio settings normalization", () => {
               id: " task-1 ",
               title: "  Review kanban interaction  ",
               status: "review",
-              source: "openclaw_event",
+              source: "hermes_event",
               assignedAgentId: " agent-1 ",
               createdAt: "2026-03-29T10:00:00.000Z",
               updatedAt: "2026-03-29T10:05:00.000Z",

@@ -2,7 +2,7 @@
 
 A 3D workspace for AI agents.
 
-> Unofficial project: Claw3D is an independent community project and is not affiliated with, endorsed by, or maintained by the OpenClaw team. OpenClaw is a separate project, and this repository is not the official OpenClaw repository.
+> Unofficial project: Claw3D is an independent community project and is not affiliated with, endorsed by, or maintained by the Hermes team. Hermes is a separate project, and this repository is not the official Hermes repository.
 
 Claw3D turns AI automation into a visual workplace where agents collaborate, review code, run tests, train skills, and execute tasks inside a shared 3D environment.
 
@@ -33,7 +33,7 @@ Claw3D is the visualization and interaction layer.
 
 Today it can sit on top of:
 
-- OpenClaw through the existing gateway flow
+- Hermes through the existing gateway flow
 - Hermes through the bundled WebSocket adapter
 - a direct HTTP `custom` runtime provider for orchestrator-backed stacks
 - a built-in demo gateway for office exploration without a real agent framework
@@ -69,7 +69,7 @@ The current app already includes a substantial Claw3D surface:
 - A 3D retro office with desks, rooms, navigation, animations, and event-driven activity cues.
 - Immersive operational spaces for standups, GitHub review flows, analytics, and system monitoring.
 - Local Studio persistence for gateway connection details, focused-agent preferences, desk assignments, office state, and related UI settings.
-- A custom same-origin WebSocket proxy so the browser talks to Studio, and Studio talks to the upstream OpenClaw Gateway.
+- A custom same-origin WebSocket proxy so the browser talks to Studio, and Studio talks to the upstream Hermes Gateway.
 
 ## Quick Start
 
@@ -78,16 +78,16 @@ Requirements:
 - Node.js 20+ recommended.
 - npm 10+ recommended.
 - One of:
-  - a working OpenClaw installation with a reachable Gateway URL and token
+  - a working Hermes installation with a reachable Gateway URL and token
   - Hermes with the bundled adapter
   - the built-in demo gateway for local exploration
 
 Prerequisite:
 
-- Claw3D does not install or build OpenClaw or Hermes for you.
+- Claw3D does not install or build Hermes for you.
 - Before starting Claw3D against a real backend, make sure your chosen runtime is already running and that you know the gateway URL and token Studio should use.
 - For a no-framework local office demo, run the bundled demo gateway instead.
-- If you need a full cross-machine setup guide (OpenClaw + Tailscale + Claw3D), follow [`TUTORIAL.md`](TUTORIAL.md).
+- If you need a full cross-machine setup guide (Hermes + Tailscale + Claw3D), follow [`TUTORIAL.md`](TUTORIAL.md).
 
 Run from source:
 
@@ -100,7 +100,7 @@ npm run dev
 ```
 
 Then open `http://localhost:3000` and configure the gateway URL and token in Studio.
-Studio now also persists the selected backend mode (`OpenClaw`, `Hermes`, `Demo`, or `Custom`) and
+Studio now also persists the selected backend mode (`Hermes`, `Demo`, or `Custom`) and
 shows the active backend reported by the connected gateway.
 
 ### Custom runtime mode
@@ -129,11 +129,11 @@ Current `custom` runtime expectations:
 The browser does not call that runtime directly. Claw3D proxies the
 `custom` provider through its own same-origin route at
 `/api/runtime/custom`, which avoids browser-side CORS problems and keeps
-the provider transport separate from the OpenClaw/Hermes gateway path.
+the provider transport separate from the Hermes gateway path.
 
 ### Demo mode
 
-If you only want to see the office and agent interactions without installing OpenClaw or Hermes:
+If you only want to see the office and agent interactions without installing Hermes:
 
 ```bash
 npm run demo-gateway
@@ -151,7 +151,7 @@ In the connect screen, choose `Demo backend`, then connect.
 
 ### Hermes adapter
 
-If you want to use Hermes instead of OpenClaw:
+If you want to use Hermes:
 
 ```bash
 npm run hermes-adapter
@@ -173,7 +173,7 @@ In the connect screen, choose `Hermes backend`, then connect.
 Claw3D uses two separate network hops:
 
 1. Browser -> Studio over HTTP and a same-origin WebSocket at `/api/gateway/ws`.
-2. Studio -> OpenClaw Gateway over a second WebSocket opened by the Studio server.
+2. Studio -> Hermes Gateway over a second WebSocket opened by the Studio server.
 
 That means `ws://localhost:18789` always refers to the gateway reachable from the Studio host, not necessarily from the browser device.
 
@@ -185,7 +185,7 @@ This design keeps gateway settings persisted on the Studio host and lets Studio 
 
 1. Start Studio with `npm run dev`.
 2. Open `http://localhost:3000`.
-3. Use `ws://localhost:18789` plus your OpenClaw gateway token.
+3. Use `ws://localhost:18789` plus your Hermes gateway token.
 
 ### Gateway remote, Studio local
 
@@ -213,10 +213,10 @@ Alternative with SSH:
 1. Start Studio with `HOST=0.0.0.0` (or a specific LAN/Tailscale host).
 2. Set `STUDIO_ACCESS_TOKEN` before exposing Studio beyond localhost.
 3. Open Claw3D from the LAN/Tailscale address instead of `localhost`.
-4. If you are connecting to a remote OpenClaw gateway, remember device approval is per browser/device. A new browser may still require:
+4. If you are connecting to a remote Hermes gateway, remember device approval is per browser/device. A new browser may still require:
 
 ```bash
-openclaw devices approve --latest
+hermes devices approve --latest
 ```
 
 ## Tech Stack
@@ -231,8 +231,8 @@ openclaw devices approve --latest
 
 Important runtime paths:
 
-- OpenClaw config: `~/.openclaw/openclaw.json`
-- Studio settings: `~/.openclaw/claw3d/settings.json`
+- Hermes config: `~/.hermes/hermes.json`
+- Studio settings: `~/.hermes/claw3d/settings.json`
 
 Common environment variables:
 
@@ -242,11 +242,11 @@ Common environment variables:
 - `CUSTOM_RUNTIME_ALLOWLIST` restricts which hosts `/api/runtime/custom` may fetch. If unset, it falls back to `UPSTREAM_ALLOWLIST`.
 - `NEXT_PUBLIC_GATEWAY_URL` provides the default upstream gateway URL when Studio settings are empty. **Note:** this is a build-time variable — changes require `npm run build` to take effect.
 - `CLAW3D_GATEWAY_URL` and `CLAW3D_GATEWAY_TOKEN` provide a runtime alternative to `NEXT_PUBLIC_GATEWAY_URL` that takes effect on server restart without a rebuild.
-- `CLAW3D_GATEWAY_ADAPTER_TYPE` can pair with `CLAW3D_GATEWAY_URL` to mark those runtime defaults as `openclaw`, `hermes`, `demo`, or `custom`.
+- `CLAW3D_GATEWAY_ADAPTER_TYPE` can pair with `CLAW3D_GATEWAY_URL` to mark those runtime defaults as `hermes`, `demo`, or `custom`.
 - If `CLAW3D_GATEWAY_URL` is not set, Studio can still surface local Hermes or demo adapter defaults from `HERMES_ADAPTER_PORT` / `DEMO_ADAPTER_PORT`.
-- OpenClaw file defaults still come from `~/.openclaw/openclaw.json` when present.
-- `OPENCLAW_STATE_DIR` and `OPENCLAW_CONFIG_PATH` override the default OpenClaw paths.
-- `OPENCLAW_GATEWAY_SSH_TARGET`, `OPENCLAW_GATEWAY_SSH_USER`, `OPENCLAW_GATEWAY_SSH_PORT`, and `OPENCLAW_GATEWAY_SSH_STRICT_HOST_KEY_CHECKING` support advanced gateway-host operations over SSH when needed.
+- Hermes file defaults still come from `~/.hermes/hermes.json` when present.
+- `HERMES_STATE_DIR` and `HERMES_CONFIG_PATH` override the default Hermes paths.
+- `HERMES_GATEWAY_SSH_TARGET`, `HERMES_GATEWAY_SSH_USER`, `HERMES_GATEWAY_SSH_PORT`, and `HERMES_GATEWAY_SSH_STRICT_HOST_KEY_CHECKING` support advanced gateway-host operations over SSH when needed.
 - `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, and `ELEVENLABS_MODEL_ID` enable voice reply integration.
 
 See [`.env.example`](.env.example) for the full local development template.
@@ -269,14 +269,14 @@ See [`.env.example`](.env.example) for the full local development template.
 
 - [`VISION.md`](VISION.md): project direction and long-term guardrails.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md): system boundaries, data flow, and major trade-offs.
-- [`TUTORIAL.md`](TUTORIAL.md): detailed step-by-step setup for OpenClaw + Tailscale + Claw3D.
+- [`TUTORIAL.md`](TUTORIAL.md): detailed step-by-step setup for Hermes + Tailscale + Claw3D.
 - [`MULTI_AGENT_BETA.md`](MULTI_AGENT_BETA.md): remote office beta setup, connection modes, and limitations.
 - [`CODE_DOCUMENTATION.md`](CODE_DOCUMENTATION.md): practical code map, extension points, and contributor onboarding order.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): local workflow, testing, and PR expectations.
 - [`SUPPORT.md`](SUPPORT.md): where to ask for help and how to route reports.
 - [`ROADMAP.md`](ROADMAP.md): near-term priorities and contributor-friendly work areas.
 - [`docs/pi-chat-streaming.md`](docs/pi-chat-streaming.md): gateway runtime streaming and transcript rendering.
-- [`docs/permissions-sandboxing.md`](docs/permissions-sandboxing.md): Studio permissions and OpenClaw behavior.
+- [`docs/permissions-sandboxing.md`](docs/permissions-sandboxing.md): Studio permissions and Hermes behavior.
 - [`docs/hermes-gateway.md`](docs/hermes-gateway.md): Hermes adapter setup, capabilities, and current limitations.
 
 ## Current Limitations
@@ -291,7 +291,7 @@ If the UI loads but Connect fails, the problem is usually on the Studio -> Gatew
 
 - Confirm the upstream URL and token in Studio settings.
 - `EPROTO` or `wrong version number` usually means `wss://` was used against a non-TLS endpoint.
-- `INVALID_REQUEST` errors mentioning `minProtocol` or `maxProtocol` usually mean the gateway is too old for Claw3D protocol v3. Upgrade OpenClaw, use the Hermes adapter, or run `npm run demo-gateway`.
+- `INVALID_REQUEST` errors mentioning `minProtocol` or `maxProtocol` usually mean the gateway is too old for Claw3D protocol v3. Upgrade Hermes, use the Hermes adapter, or run `npm run demo-gateway`.
 - `401 Studio access token required` usually means `STUDIO_ACCESS_TOKEN` is enabled and the request is missing the expected `studio_access` cookie.
 - If `/api/runtime/custom` returns a blocked-host error in production, set `CUSTOM_RUNTIME_ALLOWLIST` or include the runtime host in `UPSTREAM_ALLOWLIST`.
 - Helpful proxy error codes include `studio.gateway_url_missing`, `studio.gateway_token_missing`, `studio.upstream_error`, and `studio.upstream_closed`.
@@ -324,7 +324,7 @@ If you use other advanced gateway-host operations over SSH:
 - Windows: enable the `OpenSSH Server` optional feature, start the `sshd` service, and allow it through the firewall.
 - Linux: make sure `sshd` is installed, running, and reachable from the Studio machine.
 
-For first-time SSH connections, Claw3D uses `StrictHostKeyChecking=accept-new` by default so a new host key can be trusted automatically. If you need stricter behavior, set `OPENCLAW_GATEWAY_SSH_STRICT_HOST_KEY_CHECKING=yes`, or set it to `no` only if you explicitly want to skip host key checks.
+For first-time SSH connections, Claw3D uses `StrictHostKeyChecking=accept-new` by default so a new host key can be trusted automatically. If you need stricter behavior, set `HERMES_GATEWAY_SSH_STRICT_HOST_KEY_CHECKING=yes`, or set it to `no` only if you explicitly want to skip host key checks.
 
 ## Contributing
 
@@ -334,6 +334,6 @@ Keep pull requests focused, run `npm run lint`, `npm run typecheck`, and `npm ru
 
 If you use Cursor or another AI-assisted workflow, review the committed project guardrails in [`.cursor/rules/claw3d-project-guardrails.mdc`](.cursor/rules/claw3d-project-guardrails.mdc).
 
-That rule file captures the shared editing expectations for this repository, including the Claw3D-vs-OpenClaw boundary, code placement conventions, office-stack distinctions, and documentation/test update expectations.
+That rule file captures the shared editing expectations for this repository, including the Claw3D-vs-Hermes boundary, code placement conventions, office-stack distinctions, and documentation/test update expectations.
 
 Community expectations live in [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Security reporting instructions live in [`SECURITY.md`](SECURITY.md).

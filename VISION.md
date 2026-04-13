@@ -1,10 +1,10 @@
 # Claw3D Vision
 
-Claw3D is an open-source 3D environment for visualizing and interacting with AI agents powered by OpenClaw.
+Claw3D is an open-source 3D environment for visualizing and interacting with AI agents powered by Hermes.
 
 The long-term goal of Claw3D is to build a living 3D world where AI agents and humans collaborate: a kind of digital city where agents operate, communicate, and perform tasks in a shared visual space.
 
-OpenClaw acts as the intelligence and orchestration engine, while Claw3D provides the visual layer and interactive environment that makes agent activity understandable, inspectable, and collaborative.
+Hermes acts as the intelligence and orchestration engine, while Claw3D provides the visual layer and interactive environment that makes agent activity understandable, inspectable, and collaborative.
 
 This document explains the direction of the project and the guardrails guiding its development.
 
@@ -31,11 +31,11 @@ The ultimate vision is a 3D city of AI agents, where:
 - humans can explore, monitor, and interact with them
 - systems become understandable through spatial interaction
 
-## Relationship to OpenClaw
+## Relationship to Hermes
 
-Claw3D is designed to work with OpenClaw, not replace it.
+Claw3D is designed to work with Hermes, not replace it.
 
-OpenClaw provides:
+Hermes provides:
 
 - agent orchestration
 - tools and integrations
@@ -53,13 +53,13 @@ Claw3D provides:
 In simple terms:
 
 ```text
-OpenClaw -> intelligence and task execution
+Hermes -> intelligence and task execution
 Claw3D   -> visualization and interaction layer
 ```
 
-Maintaining compatibility with OpenClaw is an important design goal.
+Maintaining compatibility with Hermes is an important design goal.
 
-Features that require breaking OpenClaw integration will generally not be accepted unless there is a strong architectural reason.
+Features that require breaking Hermes integration will generally not be accepted unless there is a strong architectural reason.
 
 ## Current Priorities
 
@@ -77,7 +77,7 @@ Current priorities include:
 
 - defining how agents map to visual entities
 - building a scalable world model
-- establishing a clean integration path with OpenClaw
+- establishing a clean integration path with Hermes
 
 ### Developer Ergonomics
 
@@ -117,7 +117,7 @@ The current stack focuses on:
 - Three.js
 - WebGL
 - browser-based rendering
-- integration with OpenClaw runtime systems
+- integration with Hermes runtime systems
 
 The goal is to keep the environment accessible to developers and contributors.
 
@@ -125,7 +125,7 @@ The goal is to keep the environment accessible to developers and contributors.
 
 To maintain focus, the following types of contributions are generally avoided:
 
-- features that break compatibility with OpenClaw
+- features that break compatibility with Hermes
 - major architectural rewrites without prior discussion
 - replacing the rendering stack without strong technical justification
 - heavy framework layers that reduce hackability

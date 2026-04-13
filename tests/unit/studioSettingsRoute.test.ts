@@ -9,11 +9,11 @@ import { GET, PUT } from "@/app/api/studio/route";
 const makeTempDir = (name: string) => fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
 
 describe("studio settings route", () => {
-  const priorStateDir = process.env.OPENCLAW_STATE_DIR;
+  const priorStateDir = process.env.HERMES_STATE_DIR;
   let tempDir: string | null = null;
 
   afterEach(() => {
-    process.env.OPENCLAW_STATE_DIR = priorStateDir;
+    process.env.HERMES_STATE_DIR = priorStateDir;
     if (tempDir) {
       fs.rmSync(tempDir, { recursive: true, force: true });
       tempDir = null;
@@ -22,7 +22,7 @@ describe("studio settings route", () => {
 
   it("GET returns default settings when missing", async () => {
     tempDir = makeTempDir("studio-settings-get-default");
-    process.env.OPENCLAW_STATE_DIR = tempDir;
+    process.env.HERMES_STATE_DIR = tempDir;
 
     const response = await GET();
     const body = (await response.json()) as {
@@ -36,61 +36,63 @@ describe("studio settings route", () => {
     expect(body.settings?.version).toBe(1);
   });
 
-  it("GET returns local gateway defaults from openclaw.json", async () => {
+  it("GET returns local gateway defaults from env vars", async () => {
     tempDir = makeTempDir("studio-settings-get-local-defaults");
-    process.env.OPENCLAW_STATE_DIR = tempDir;
-    fs.writeFileSync(
-      path.join(tempDir, "openclaw.json"),
-      JSON.stringify({ gateway: { port: 18791, auth: { token: "local-token" } } }, null, 2),
-      "utf8"
-    );
+    process.env.HERMES_STATE_DIR = tempDir;
+    process.env.HERMES_ADAPTER_PORT = "18791";
+    process.env.CLAW3D_GATEWAY_TOKEN = "local-token";
 
-    const response = await GET();
-    const body = (await response.json()) as {
-      settings?: {
-        gateway?: {
+    try {
+      const response = await GET();
+      const body = (await response.json()) as {
+        settings?: {
+          gateway?: {
+            url?: string;
+            tokenConfigured?: boolean;
+            adapterType?: string;
+            profiles?: Record<string, { url?: string; tokenConfigured?: boolean }>;
+          } | null;
+        };
+        localGatewayDefaults?: {
           url?: string;
           tokenConfigured?: boolean;
           adapterType?: string;
           profiles?: Record<string, { url?: string; tokenConfigured?: boolean }>;
         } | null;
       };
-      localGatewayDefaults?: {
-        url?: string;
-        tokenConfigured?: boolean;
-        adapterType?: string;
-        profiles?: Record<string, { url?: string; tokenConfigured?: boolean }>;
-      } | null;
-    };
 
-    expect(response.status).toBe(200);
-    expect(body.localGatewayDefaults).toEqual({
-      url: "ws://localhost:18791",
-      tokenConfigured: true,
-      adapterType: "openclaw",
-      profiles: {
-        openclaw: {
-          url: "ws://localhost:18791",
-          tokenConfigured: true,
+      expect(response.status).toBe(200);
+      expect(body.localGatewayDefaults).toEqual({
+        url: "ws://localhost:18791",
+        tokenConfigured: false,
+        adapterType: "hermes",
+        profiles: {
+          hermes: {
+            url: "ws://localhost:18791",
+            tokenConfigured: false,
+          },
         },
-      },
-    });
-    expect(body.settings?.gateway).toEqual({
-      url: "ws://localhost:18791",
-      tokenConfigured: true,
-      adapterType: "openclaw",
-      profiles: {
-        openclaw: {
-          url: "ws://localhost:18791",
-          tokenConfigured: true,
+      });
+      expect(body.settings?.gateway).toEqual({
+        url: "ws://localhost:18791",
+        tokenConfigured: false,
+        adapterType: "hermes",
+        profiles: {
+          hermes: {
+            url: "ws://localhost:18791",
+            tokenConfigured: false,
+          },
         },
-      },
-    });
+      });
+    } finally {
+      delete process.env.HERMES_ADAPTER_PORT;
+      delete process.env.CLAW3D_GATEWAY_TOKEN;
+    }
   });
 
   it("PUT returns 400 for non-object JSON payload", async () => {
     tempDir = makeTempDir("studio-settings-put-invalid");
-    process.env.OPENCLAW_STATE_DIR = tempDir;
+    process.env.HERMES_STATE_DIR = tempDir;
 
     const response = await PUT({
       text: async () => JSON.stringify("nope"),
@@ -104,7 +106,7 @@ describe("studio settings route", () => {
 
   it("PUT persists a patch and GET returns merged settings", async () => {
     tempDir = makeTempDir("studio-settings-put-persist");
-    process.env.OPENCLAW_STATE_DIR = tempDir;
+    process.env.HERMES_STATE_DIR = tempDir;
 
     const patch = {
       gateway: { url: "ws://example.test:1234", token: "t", adapterType: "hermes" },

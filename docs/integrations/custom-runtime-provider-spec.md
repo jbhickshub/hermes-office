@@ -1,6 +1,6 @@
 # Custom Runtime Provider Spec
 
-> Generic extension seam for non-OpenClaw, non-Hermes stacks.
+> Generic extension seam for non-Hermes, non-Hermes stacks.
 
 ## Goal
 
@@ -8,7 +8,7 @@ Define a clean `custom` runtime provider class for Claw3D.
 
 This provider should let external orchestration stacks integrate with Claw3D through a stable seam without requiring:
 
-- OpenClaw emulation
+- Hermes emulation
 - Hermes-specific semantics
 - named first-class core support for every stack
 
@@ -72,7 +72,6 @@ This is the upstream-safe abstraction.
 
 Claw3D’s runtime abstraction already points toward multiple providers:
 
-- `openclaw`
 - `hermes`
 - future providers
 
@@ -104,7 +103,6 @@ It should not require upstream Claw3D to know:
 
 Suggested provider IDs:
 
-- `openclaw`
 - `hermes`
 - `custom`
 
@@ -143,7 +141,7 @@ This should align with the existing runtime abstraction, but allow custom metada
 Example:
 
 ```ts
-type RuntimeProviderId = "openclaw" | "hermes" | "custom";
+type RuntimeProviderId = "hermes" | "custom";
 
 type RuntimeProviderMetadata = {
   id: RuntimeProviderId;

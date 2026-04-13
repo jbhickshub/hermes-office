@@ -2,8 +2,8 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 
-const LEGACY_STATE_DIRNAMES = [".clawdbot", ".moltbot"];
-const NEW_STATE_DIRNAME = ".openclaw";
+const LEGACY_STATE_DIRNAMES = [".clawdbot", ".moltbot", ".openclaw"];
+const NEW_STATE_DIRNAME = ".hermes";
 
 const resolveUserPath = (input) => {
   const trimmed = String(input ?? "").trim();
@@ -27,7 +27,7 @@ const resolveDefaultHomeDir = () => {
 
 const resolveStateDir = (env = process.env) => {
   const override =
-    env.OPENCLAW_STATE_DIR?.trim() ||
+    env.HERMES_STATE_DIR?.trim() ||
     env.MOLTBOT_STATE_DIR?.trim() ||
     env.CLAWDBOT_STATE_DIR?.trim();
   if (override) return resolveUserPath(override);
@@ -57,30 +57,6 @@ const readJsonFile = (filePath) => {
 };
 
 const DEFAULT_GATEWAY_URL = "ws://localhost:18789";
-const OPENCLAW_CONFIG_FILENAME = "openclaw.json";
-
-const isRecord = (value) => Boolean(value && typeof value === "object");
-
-const readOpenclawGatewayDefaults = (env = process.env) => {
-  try {
-    const stateDir = resolveStateDir(env);
-    const configPath = path.join(stateDir, OPENCLAW_CONFIG_FILENAME);
-    const parsed = readJsonFile(configPath);
-    if (!isRecord(parsed)) return null;
-    const gateway = isRecord(parsed.gateway) ? parsed.gateway : null;
-    if (!gateway) return null;
-    const auth = isRecord(gateway.auth) ? gateway.auth : null;
-    const token = typeof auth?.token === "string" ? auth.token.trim() : "";
-    const port =
-      typeof gateway.port === "number" && Number.isFinite(gateway.port) ? gateway.port : null;
-    if (!token) return null;
-    const url = port ? `ws://localhost:${port}` : "";
-    if (!url) return null;
-    return { url, token, adapterType: "openclaw" };
-  } catch {
-    return null;
-  }
-};
 
 const loadUpstreamGatewaySettings = (env = process.env) => {
   const settingsPath = resolveStudioSettingsPath(env);
@@ -91,18 +67,7 @@ const loadUpstreamGatewaySettings = (env = process.env) => {
   const adapterType =
     typeof gateway?.adapterType === "string" && gateway.adapterType.trim()
       ? gateway.adapterType.trim()
-      : "openclaw";
-  if (!token && adapterType === "openclaw") {
-    const defaults = readOpenclawGatewayDefaults(env);
-    if (defaults) {
-      return {
-        url: url || defaults.url,
-        token: defaults.token,
-        adapterType,
-        settingsPath,
-      };
-    }
-  }
+      : "hermes";
   return {
     url: url || DEFAULT_GATEWAY_URL,
     token,

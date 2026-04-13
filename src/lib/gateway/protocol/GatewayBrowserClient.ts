@@ -1,8 +1,6 @@
-// Adapted from `openclaw/openclaw` `ui/src/ui/gateway.ts`.
-// Source license: MIT. Last verified against OpenClaw 2026.2.12
-// (`f9e444dd56ccfc2271e8ae1729b7a14a55e1c11e`).
-// Update this file via `npm run sync:gateway-client -- /path/to/gateway.ts` and record
-// provenance changes in `THIRD_PARTY_CODE.md` whenever the upstream source changes.
+// Gateway WebSocket protocol client.
+// Originally adapted from upstream gateway client source.
+// Source license: MIT.
 import { getPublicKeyAsync, signAsync, utils } from "@noble/ed25519";
 import { GatewayResponseError } from "@/lib/gateway/errors";
 
@@ -22,7 +20,7 @@ const gatewayBrowserDebugLog = (
 };
 
 const GATEWAY_CLIENT_NAMES = {
-  CONTROL_UI: "openclaw-control-ui",
+  CONTROL_UI: "hermes-control-ui",
 } as const;
 
 const GATEWAY_CLIENT_MODES = {
@@ -365,7 +363,7 @@ export type GatewayResponseFrame = {
 export type GatewayHelloOk = {
   type: "hello-ok";
   protocol: number;
-  adapterType?: "openclaw" | "hermes" | "demo" | "custom";
+  adapterType?: "hermes" | "demo" | "custom";
   features?: { methods?: string[]; events?: string[] };
   snapshot?: unknown;
   auth?: {

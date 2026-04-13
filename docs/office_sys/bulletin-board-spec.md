@@ -226,7 +226,7 @@ That lets the user jump from "office signal" to "underlying conversation or task
 
 ### Runtime-Neutral Backends
 
-The board must not depend on OpenClaw-specific methods.
+The board must not depend on Hermes-specific methods.
 
 It should operate off:
 
@@ -236,7 +236,7 @@ It should operate off:
 
 That keeps it usable with:
 
-- OpenClaw
+- Hermes
 - Hermes
 - Vera
 - Demo mode
@@ -372,7 +372,7 @@ V1 is successful if:
 - the board shows office-relevant cards, not just generic notes
 - standup or blocker information can appear on the board
 - cards can link back into agents/sessions/tasks
-- the system works with Hermes, OpenClaw, and demo mode
+- the system works with Hermes, Hermes, and demo mode
 
 ## Future Extensions
 

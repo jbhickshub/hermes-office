@@ -54,11 +54,11 @@ export const GatewayConnectScreen = ({
   const isLocal = useMemo(() => isLocalGatewayUrl(gatewayUrl), [gatewayUrl]);
   const localPort = useMemo(() => resolveLocalGatewayPort(gatewayUrl), [gatewayUrl]);
   const localGatewayCommand = useMemo(
-    () => `npx openclaw gateway run --bind loopback --port ${localPort} --verbose`,
+    () => `npx hermes gateway run --bind loopback --port ${localPort} --verbose`,
     [localPort]
   );
   const localGatewayCommandPnpm = useMemo(
-    () => `pnpm openclaw gateway run --bind loopback --port ${localPort} --verbose`,
+    () => `pnpm hermes gateway run --bind loopback --port ${localPort} --verbose`,
     [localPort]
   );
   const localDemoCommand = useMemo(
@@ -70,9 +70,6 @@ export const GatewayConnectScreen = ({
   };
   const useHermesPreset = () => {
     onAdapterTypeChange("hermes");
-  };
-  const useOpenClawPreset = () => {
-    onAdapterTypeChange("openclaw");
   };
   const useCustomPreset = () => {
     onAdapterTypeChange("custom");
@@ -200,14 +197,14 @@ export const GatewayConnectScreen = ({
         </div>
       ) : null}
       {error ? <p className="ui-text-danger text-xs leading-snug">{error}</p> : null}
-      {showApprovalHint && selectedAdapterType === "openclaw" ? (
+      {showApprovalHint && selectedAdapterType === "hermes" ? (
         <div className="rounded-md border border-border bg-muted/40 px-3 py-3 text-xs text-muted-foreground">
           <p className="leading-snug">
-            If the first connection attempt did not work, go to your OpenClaw computer and approve this
+            If the first connection attempt did not work, go to your Hermes host and approve this
             device:
           </p>
           <code className="mt-2 block overflow-x-auto whitespace-nowrap rounded-md bg-[var(--command-bg)] px-2.5 py-2 font-mono text-[11px] text-[var(--command-fg)]">
-            openclaw devices approve --latest
+            hermes devices approve --latest
           </code>
         </div>
       ) : null}
@@ -265,13 +262,6 @@ export const GatewayConnectScreen = ({
             >
               Custom backend
             </button>
-            <button
-              type="button"
-              className="ui-btn-secondary px-3 py-1.5 text-[11px] font-semibold tracking-[0.05em]"
-              onClick={useOpenClawPreset}
-            >
-              OpenClaw backend
-            </button>
           </div>
         </div>
         {remoteForm}
@@ -319,7 +309,7 @@ export const GatewayConnectScreen = ({
               Start Studio with <span className="font-mono text-foreground">HOST=0.0.0.0</span> (or a
               specific LAN/Tailscale host) and set
               <span className="font-mono text-foreground"> STUDIO_ACCESS_TOKEN</span> before exposing it
-              beyond localhost. Gateway settings are stored on the Studio host, but OpenClaw device approval
+              beyond localhost. Gateway settings are stored on the Studio host, but Hermes device approval
               remains per browser/device.
             </p>
           </div>
@@ -327,7 +317,7 @@ export const GatewayConnectScreen = ({
             <div className="ui-input rounded-md px-3 py-3">
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
-                  Use token from <span className="font-mono">~/.openclaw/openclaw.json</span>.
+                  Use token from <span className="font-mono">~/.hermes/hermes.json</span>.
                 </p>
                 <p className="font-mono text-[11px] text-foreground">
                   {localGatewayDefaults.url}

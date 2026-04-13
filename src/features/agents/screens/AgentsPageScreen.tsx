@@ -1691,7 +1691,7 @@ const AgentsPageScreen = () => {
                             onDeleteCronJob={(jobId) =>
                               settingsMutationController.handleDeleteCronJob(inspectSidebarAgent.agentId, jobId)
                             }
-                            controlUiUrl={selectedAdapterType === "openclaw" ? controlUiUrl : null}
+                            controlUiUrl={selectedAdapterType === "hermes" ? controlUiUrl : null}
                             adapterType={selectedAdapterType}
                           />
                         </div>

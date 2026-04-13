@@ -3,18 +3,18 @@
 This document exists to onboard coding agents quickly when debugging chat issues in Claw3D.
 
 Scope:
-- Describes how Studio connects to the OpenClaw Gateway, how runtime streaming arrives over WebSockets, and how the UI renders it.
-- Treats **PI** as “the coding agent running behind the Gateway” (an OpenClaw agent). Studio does not implement PI logic; it displays and controls the Gateway session.
+- Describes how Studio connects to the Hermes Gateway, how runtime streaming arrives over WebSockets, and how the UI renders it.
+- Treats **PI** as “the coding agent running behind the Gateway” (an Hermes agent). Studio does not implement PI logic; it displays and controls the Gateway session.
 
 Non-scope:
-- PI internals and model/tool execution details. Those live in the OpenClaw repository and the Gateway implementation.
+- PI internals and model/tool execution details. Those live in the Hermes repository and the Gateway implementation.
 
 ## Key Files (Start Here)
 
 - Studio server entry + upgrade wiring: `server/index.js`
 - Browser WS bridge to upstream gateway: `server/gateway-proxy.js`
 - Browser WS URL (always same-origin `/api/gateway/ws`): `src/lib/gateway/proxy-url.ts`
-- Browser gateway protocol client (vendored): `src/lib/gateway/openclaw/GatewayBrowserClient.ts`
+- Browser gateway protocol client (vendored): `src/lib/gateway/hermes/GatewayBrowserClient.ts`
 - Studio gateway wrapper + connect policy: `src/lib/gateway/GatewayClient.ts`
 - Runtime stream classification and merge helpers: `src/features/agents/state/runtimeEventBridge.ts`
 - Runtime event executor (streaming -> state -> transcript lines): `src/features/agents/state/gatewayRuntimeEventHandler.ts`
@@ -22,11 +22,11 @@ Non-scope:
 - Message parsing (text/thinking/tool markers): `src/lib/text/message-extract.ts`
 - History sync + transcript merge: `src/features/agents/operations/historySyncOperation.ts`, `src/features/agents/state/transcript.ts`
 
-## Relationship To OpenClaw (What’s Vendored Here)
+## Relationship To Hermes (What’s Vendored Here)
 
 Studio vendors the browser Gateway client used to speak the Gateway protocol:
-- Vendored client: `src/lib/gateway/openclaw/GatewayBrowserClient.ts`
-- Sync script: `scripts/sync-openclaw-gateway-client.ts`
+- Vendored client: `src/lib/gateway/hermes/GatewayBrowserClient.ts`
+- Sync script: `scripts/sync-hermes-gateway-client.ts`
 - Sync source: provide an explicit local source path to the sync script via CLI arg or env var.
 
 Important:
@@ -35,20 +35,20 @@ Important:
 
 If a protocol mismatch is suspected (missing event fields, renamed streams, different error codes), start by checking whether Studio’s vendored client is in sync with the Gateway version you’re running.
 
-## Upstream Source Of Truth (OpenClaw)
+## Upstream Source Of Truth (Hermes)
 
 For chat streaming behavior, these upstream files are authoritative:
-- `src/gateway/protocol/schema/logs-chat.ts` in your OpenClaw checkout (`chat.send`, `chat.history`, and chat event schema)
-- `src/gateway/server-methods/chat.ts` in your OpenClaw checkout (`chat.send` ack + idempotency, `chat.history` payload shaping/sanitization)
-- `src/gateway/server-chat.ts` in your OpenClaw checkout (`agent` event fanout and synthetic `chat` delta/final bridging)
-- `src/agents/pi-embedded-subscribe.ts` and related handlers in your OpenClaw checkout (`assistant`/`tool`/`lifecycle` stream emission)
+- `src/gateway/protocol/schema/logs-chat.ts` in your Hermes checkout (`chat.send`, `chat.history`, and chat event schema)
+- `src/gateway/server-methods/chat.ts` in your Hermes checkout (`chat.send` ack + idempotency, `chat.history` payload shaping/sanitization)
+- `src/gateway/server-chat.ts` in your Hermes checkout (`agent` event fanout and synthetic `chat` delta/final bridging)
+- `src/agents/pi-embedded-subscribe.ts` and related handlers in your Hermes checkout (`assistant`/`tool`/`lifecycle` stream emission)
 
 When updating this doc, verify behavior against those files, not assumptions.
 
 ## Terminology
 
 - Studio: this repo, a Next.js UI with a custom Node server.
-- Gateway (upstream): the OpenClaw Gateway WebSocket server (default `ws://localhost:18789`).
+- Gateway (upstream): the Hermes Gateway WebSocket server (default `ws://localhost:18789`).
 - WS bridge / proxy: Studio’s server-side WebSocket that bridges the browser to the upstream Gateway.
 - Frame: JSON message over WebSocket (request/response/event).
 - Run: a single streamed execution identified by `runId`.
@@ -62,7 +62,7 @@ There are two separate WebSocket hops, plus a protocol-level `connect` request:
 sequenceDiagram
   participant B as Browser (Studio UI)
   participant S as Studio server (WS proxy)
-  participant G as OpenClaw Gateway (upstream)
+  participant G as Hermes Gateway (upstream)
 
   B->>S: WS connect /api/gateway/ws
   B->>S: req(connect) (Gateway protocol frame)
@@ -108,7 +108,7 @@ The key wiring is in:
 ## Studio Settings (Where Gateway URL/Token Come From)
 
 Studio persists Gateway connection settings on the Studio host (not in browser persistent storage). The UI still loads them into browser memory at runtime:
-- `~/.openclaw/claw3d/settings.json` (see `README.md` for the canonical location)
+- `~/.hermes/claw3d/settings.json` (see `README.md` for the canonical location)
 
 The WS proxy loads these settings server-side and opens the upstream connection.
 
@@ -122,7 +122,7 @@ Connection note:
 - In the browser, `useGatewayConnection()` stores the upstream URL/token in memory (loaded from `/api/studio`) but connects the WebSocket to Studio via `resolveStudioProxyGatewayUrl()`; the upstream URL is passed as `authScopeKey` (not as the WebSocket URL). See `src/lib/gateway/GatewayClient.ts`.
 
 Token resolution note:
-- The Studio server resolves an upstream token from `claw3d/settings.json`, and if it is missing it may fall back to the local OpenClaw config in `openclaw.json` (token + port). This behavior exists in both the WS proxy path (`server/studio-settings.js`) and the `/api/studio` storage layer (`src/lib/studio/settings-store.ts`) and they should remain consistent.
+- The Studio server resolves an upstream token from `claw3d/settings.json`, and if it is missing it may fall back to the local Hermes config in `hermes.json` (token + port). This behavior exists in both the WS proxy path (`server/studio-settings.js`) and the `/api/studio` storage layer (`src/lib/studio/settings-store.ts`) and they should remain consistent.
 - During `connect`, the WS proxy forwards browser-provided auth (`params.auth.token` or `params.device.signature`) as-is. It injects the host-resolved token only when browser auth is absent. `studio.gateway_token_missing` is returned only when neither browser auth nor host token is available.
 
 ## WebSocket Frame Shapes
@@ -156,7 +156,7 @@ Code:
 On failure to load settings or open upstream, the proxy sends an error `res` for the connect request (when possible) and then closes the WS.
 
 Important detail (how errors become actionable in the UI):
-- The browser-side Gateway client (`src/lib/gateway/openclaw/GatewayBrowserClient.ts`) closes the WebSocket with close code `4008` and a reason like `connect failed: <CODE> <MESSAGE>` after it receives a failed `res(connect)`. `GatewayClient.connect()` parses that close into `GatewayResponseError(code, message)` for UI retry policy and user-facing errors.
+- The browser-side Gateway client (`src/lib/gateway/hermes/GatewayBrowserClient.ts`) closes the WebSocket with close code `4008` and a reason like `connect failed: <CODE> <MESSAGE>` after it receives a failed `res(connect)`. `GatewayClient.connect()` parses that close into `GatewayResponseError(code, message)` for UI retry policy and user-facing errors.
 - Separately, the proxy may also close with `1011` / `connect failed`; the “connect failed: …” close reason that the UI parses is produced by the browser client, not the proxy.
 - WebSocket close reasons are truncated to 123 UTF-8 bytes in the browser client to avoid protocol errors on long messages.
 
@@ -172,7 +172,7 @@ Error codes used by the proxy include:
 
 There are two layers of retry behavior:
 
-- Transport reconnect (after a successful hello): the vendored browser client reconnects the browser->Studio WebSocket with backoff when it closes, and continues emitting events after reconnect. See `src/lib/gateway/openclaw/GatewayBrowserClient.ts`.
+- Transport reconnect (after a successful hello): the vendored browser client reconnects the browser->Studio WebSocket with backoff when it closes, and continues emitting events after reconnect. See `src/lib/gateway/hermes/GatewayBrowserClient.ts`.
 - Initial connect failure retry: when the initial `connect` handshake fails (for example bad token), `GatewayClient.connect()` tears down the vendored client and returns a rejected promise; `useGatewayConnection()` may schedule a limited re-attempt unless the error code is known non-retryable. See `resolveGatewayAutoRetryDelayMs` in `src/lib/gateway/GatewayClient.ts`.
 
 ## Studio Access Gate
@@ -304,7 +304,7 @@ Studio behavior on gap:
 - Forces a summary snapshot refresh and reconciles running agents.
 
 Files:
-- Gap detection: `src/lib/gateway/openclaw/GatewayBrowserClient.ts`
+- Gap detection: `src/lib/gateway/hermes/GatewayBrowserClient.ts`
 - Gap handling: `src/app/page.tsx`
 
 ## History Sync (Recovery, Load More)
@@ -334,17 +334,17 @@ Files:
 ## Media Rendering (Images From Agent Output)
 
 If an agent outputs lines like:
-- `MEDIA: /home/ubuntu/.openclaw/.../image.png`
+- `MEDIA: /home/ubuntu/.hermes/.../image.png`
 
 Studio may render them inline:
 1. UI rewrites eligible `MEDIA:` lines into markdown images (`![](/api/gateway/media?path=...)`) but avoids rewriting inside fenced code blocks.
 2. The browser requests `/api/gateway/media`.
-3. The API route reads the image either locally (only under `~/.openclaw`) or over SSH for remote gateways, and returns the bytes with the correct `Content-Type`.
+3. The API route reads the image either locally (only under `~/.hermes`) or over SSH for remote gateways, and returns the bytes with the correct `Content-Type`.
 
 Files:
 - Rewrite helper: `src/lib/text/media-markdown.ts`
 - Media API route: `src/app/api/gateway/media/route.ts`
-- SSH helper + env vars (`OPENCLAW_GATEWAY_SSH_TARGET`, `OPENCLAW_GATEWAY_SSH_USER`): `src/lib/ssh/gateway-host.ts`
+- SSH helper + env vars (`HERMES_GATEWAY_SSH_TARGET`, `HERMES_GATEWAY_SSH_USER`): `src/lib/ssh/gateway-host.ts`
 
 ## Debugging Checklist (When Chat “Feels Buggy”)
 

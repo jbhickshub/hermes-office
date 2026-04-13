@@ -250,7 +250,7 @@ export const AgentSettingsPanel = ({
   cronCreateBusy = false,
   onCreateCronJob = () => {},
   controlUiUrl = null,
-  adapterType = "openclaw",
+  adapterType = "hermes",
   skillsReport = null,
   skillsLoading = false,
   skillsError = null,
@@ -270,7 +270,7 @@ export const AgentSettingsPanel = ({
   onSkillApiKeyChange = () => {},
   onSaveSkillApiKey = () => {},
 }: AgentSettingsPanelProps) => {
-  const isOpenClawRuntime = adapterType === "openclaw";
+  const isHermesRuntime = adapterType === "hermes";
   const initialPermissionsDraft =
     permissionsDraft ?? resolvePresetDefaultsForRole(resolveExecutionRoleFromAgent(agent));
   const [permissionsBaselineValue, setPermissionsBaselineValue] =
@@ -789,7 +789,7 @@ export const AgentSettingsPanel = ({
                 })}
               </div>
             ) : null}
-            {isOpenClawRuntime ? (
+            {isHermesRuntime ? (
               <section className="sidebar-section" data-testid="agent-settings-heartbeat-coming-soon">
                 <h3 className="sidebar-section-title">Heartbeats</h3>
                 <div className="mt-3 text-[11px] text-muted-foreground">
@@ -800,7 +800,7 @@ export const AgentSettingsPanel = ({
           </section>
         ) : null}
 
-        {mode === "advanced" && isOpenClawRuntime ? (
+        {mode === "advanced" && isHermesRuntime ? (
           <>
             <section className="sidebar-section mt-8" data-testid="agent-settings-control-ui">
               <h3 className="sidebar-section-title ui-text-danger">Danger Zone</h3>
@@ -809,7 +809,7 @@ export const AgentSettingsPanel = ({
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <div className="space-y-1">
                     <div className="font-medium">Advanced users only.</div>
-                    <div>Open the full OpenClaw Control UI outside Studio.</div>
+                    <div>Open the full Hermes Control UI outside Studio.</div>
                     <div>Changes there can break agent behavior or put Studio out of sync.</div>
                   </div>
                 </div>

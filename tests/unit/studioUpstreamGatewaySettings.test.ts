@@ -7,36 +7,30 @@ import { afterEach, describe, expect, it } from "vitest";
 const makeTempDir = (name: string) => fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
 
 describe("server studio upstream gateway settings", () => {
-  const priorStateDir = process.env.OPENCLAW_STATE_DIR;
+  const priorStateDir = process.env.HERMES_STATE_DIR;
   let tempDir: string | null = null;
 
   afterEach(() => {
-    process.env.OPENCLAW_STATE_DIR = priorStateDir;
+    process.env.HERMES_STATE_DIR = priorStateDir;
     if (tempDir) {
       fs.rmSync(tempDir, { recursive: true, force: true });
       tempDir = null;
     }
   });
 
-  it("falls back to openclaw.json token/port when studio settings are missing", async () => {
-    tempDir = makeTempDir("studio-upstream-openclaw-defaults");
-    process.env.OPENCLAW_STATE_DIR = tempDir;
-
-    fs.writeFileSync(
-      path.join(tempDir, "openclaw.json"),
-      JSON.stringify({ gateway: { port: 18790, auth: { token: "tok" } } }, null, 2),
-      "utf8"
-    );
+  it("falls back to default url and empty token when studio settings are missing", async () => {
+    tempDir = makeTempDir("studio-upstream-hermes-defaults");
+    process.env.HERMES_STATE_DIR = tempDir;
 
     const { loadUpstreamGatewaySettings } = await import("../../server/studio-settings");
     const settings = loadUpstreamGatewaySettings(process.env);
-    expect(settings.url).toBe("ws://localhost:18790");
-    expect(settings.token).toBe("tok");
+    expect(settings.url).toBe("ws://localhost:18789");
+    expect(settings.token).toBe("");
   });
 
-  it("keeps a configured url and fills token from openclaw.json when missing", async () => {
+  it("keeps a configured url and empty token when no token in settings", async () => {
     tempDir = makeTempDir("studio-upstream-url-keep");
-    process.env.OPENCLAW_STATE_DIR = tempDir;
+    process.env.HERMES_STATE_DIR = tempDir;
 
     fs.mkdirSync(path.join(tempDir, "claw3d"), { recursive: true });
     fs.writeFileSync(
@@ -44,15 +38,10 @@ describe("server studio upstream gateway settings", () => {
       JSON.stringify({ gateway: { url: "ws://gateway.example:18789", token: "" } }, null, 2),
       "utf8"
     );
-    fs.writeFileSync(
-      path.join(tempDir, "openclaw.json"),
-      JSON.stringify({ gateway: { port: 18789, auth: { token: "tok-local" } } }, null, 2),
-      "utf8"
-    );
 
     const { loadUpstreamGatewaySettings } = await import("../../server/studio-settings");
     const settings = loadUpstreamGatewaySettings(process.env);
     expect(settings.url).toBe("ws://gateway.example:18789");
-    expect(settings.token).toBe("tok-local");
+    expect(settings.token).toBe("");
   });
 });

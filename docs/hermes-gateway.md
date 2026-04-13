@@ -146,7 +146,7 @@ It is loaded on startup and updated when conversations change.
 ## When to use demo mode instead
 
 If you only want to see the office boot without installing Hermes or
-OpenClaw, use:
+Hermes, use:
 
 ```bash
 npm run demo-gateway
@@ -155,7 +155,7 @@ npm run dev
 
 That starts a bundled mock gateway for a no-framework Claw3D demo.
 
-## Using OpenClaw instead
+## Using Hermes instead
 
-If you want the OpenClaw path, do not run the Hermes adapter. Start
-OpenClaw and point Claw3D at that gateway instead.
+If you want the Hermes path, do not run the Hermes adapter. Start
+Hermes and point Claw3D at that gateway instead.

@@ -13,9 +13,9 @@ const parseArgs = (argv) => {
   };
 };
 
-const tryReadGatewayTokenFromOpenclawCli = () => {
+const tryReadGatewayTokenFromHermesCli = () => {
   try {
-    const raw = execFileSync("openclaw", ["config", "get", "gateway.auth.token"], {
+    const raw = execFileSync("hermes", ["config", "get", "gateway.auth.token"], {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     });
@@ -54,15 +54,15 @@ async function main() {
       throw new Error("Gateway URL is required.");
     }
 
-    const tokenDefault = tryReadGatewayTokenFromOpenclawCli();
+    const tokenDefault = tryReadGatewayTokenFromHermesCli();
     const tokenPrompt = tokenDefault
-      ? "Upstream Gateway Token [detected from openclaw]: "
+      ? "Upstream Gateway Token [detected from hermes]: "
       : "Upstream Gateway Token: ";
     const tokenAnswer = await rl.question(tokenPrompt);
     const token = (tokenAnswer || tokenDefault || "").trim();
     if (!token) {
       throw new Error(
-        "Gateway token is required. Provide it, or install/openclaw so it can be auto-detected."
+        "Gateway token is required. Provide it, or install hermes so it can be auto-detected."
       );
     }
 

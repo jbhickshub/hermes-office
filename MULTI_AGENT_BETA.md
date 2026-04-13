@@ -20,12 +20,12 @@ This is a beta feature. It is designed for visibility and lightweight cross-offi
 There are always two roles:
 
 - **Local office**: the Claw3D instance you are currently using;
-- **Remote office**: another Claw3D instance or another OpenClaw gateway you want to visualize.
+- **Remote office**: another Claw3D instance or another Hermes gateway you want to visualize.
 
 The remote office can be connected in one of two ways:
 
 1. **Remote Claw3D presence endpoint**.
-2. **Remote OpenClaw gateway**.
+2. **Remote Hermes gateway**.
 
 ## Connection Modes
 
@@ -47,9 +47,9 @@ https://other-office.example.com/api/office/presence
 
 This mode is best when you want the remote side to feel like another full Claw3D office.
 
-### 2. Remote OpenClaw Gateway
+### 2. Remote Hermes Gateway
 
-Use this when the other machine only runs OpenClaw and does not run Claw3D.
+Use this when the other machine only runs Hermes and does not run Claw3D.
 
 How it works:
 
@@ -117,7 +117,7 @@ Current limitations:
 
 Before enabling the second office, make sure:
 
-- your local Claw3D is already working with your local OpenClaw gateway;
+- your local Claw3D is already working with your local Hermes gateway;
 - you know which remote mode you want to use;
 - the remote machine is reachable from your machine or browser;
 - any required token, origin allowlist, or private-network access is already configured.
@@ -151,11 +151,11 @@ Expected behavior:
 - remote agents show up when the remote office has active presence;
 - if the remote layout snapshot is unavailable, Claw3D falls back to a default/fallback office rendering for the remote side.
 
-### Setup For `Remote OpenClaw gateway`
+### Setup For `Remote Hermes gateway`
 
 Use:
 
-- `Source type`: `Remote OpenClaw gateway`.
+- `Source type`: `Remote Hermes gateway`.
 - `Gateway URL`: the remote gateway WebSocket URL.
 - `Shared gateway token`: optional when the gateway already allows your Control UI origin and connection model.
 
@@ -179,7 +179,7 @@ Expected behavior:
 
 ### Same private network
 
-Use a reachable private IP or local hostname for the remote Claw3D endpoint or OpenClaw gateway.
+Use a reachable private IP or local hostname for the remote Claw3D endpoint or Hermes gateway.
 
 ### Tailscale
 
@@ -188,7 +188,7 @@ Tailscale is a good fit for this beta because it lets both sides connect over a 
 Common patterns:
 
 - remote Claw3D endpoint over `https://<machine>.ts.net/api/office/presence`;
-- remote OpenClaw gateway over `wss://<machine>.ts.net` if you are proxying the gateway through HTTPS/WSS;
+- remote Hermes gateway over `wss://<machine>.ts.net` if you are proxying the gateway through HTTPS/WSS;
 - direct gateway over `ws://<machine>:18789` when both devices can reach the service privately.
 
 ## Disable Behavior
@@ -228,7 +228,7 @@ If that happens, check:
 
 ### You can reach an HTTPS page but gateway mode still fails
 
-Opening a web page in the browser does not automatically mean the OpenClaw gateway WebSocket is reachable.
+Opening a web page in the browser does not automatically mean the Hermes gateway WebSocket is reachable.
 
 Examples:
 
@@ -248,4 +248,4 @@ Examples:
 
 Use `Remote Claw3D presence endpoint` when the other side runs Claw3D and you want the most complete office visualization.
 
-Use `Remote OpenClaw gateway` when the other side only runs OpenClaw and you mainly want remote agent presence plus lightweight text messaging.
+Use `Remote Hermes gateway` when the other side only runs Hermes and you mainly want remote agent presence plus lightweight text messaging.

@@ -5,7 +5,7 @@ import type {
   GatewayStatus,
 } from "@/lib/gateway/GatewayClient";
 import type { GatewayClient } from "@/lib/gateway/GatewayClient";
-import { normalizeGatewayEvent } from "@/lib/runtime/openclaw/normalizeGatewayEvent";
+import { normalizeGatewayEvent } from "@/lib/runtime/normalizeGatewayEvent";
 import type { RuntimeCapability, RuntimeEvent, RuntimeProvider } from "@/lib/runtime/types";
 
 const DEMO_RUNTIME_CAPABILITIES: ReadonlySet<RuntimeCapability> = new Set([

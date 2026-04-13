@@ -5,8 +5,8 @@ Thanks for helping improve Claw3D.
 Please use GitHub Issues for bugs, feature requests, and questions about planned work.
 
 ## Before you start
-- Install OpenClaw and confirm the gateway runs locally.
-- This repo is UI-only and reads config from `~/.openclaw` with legacy fallback to `~/.moltbot` or `~/.clawdbot`.
+- Install Hermes and confirm the gateway runs locally.
+- This repo is UI-only and reads config from `~/.hermes` with legacy fallback to `~/.moltbot` or `~/.clawdbot`.
 - It does not run or build the gateway from source.
 - Read `CODE_DOCUMENTATION.md` for the repo code map, extension points, and the recommended onboarding order through the codebase.
 - Use `ROADMAP.md` if you are looking for starter work or near-term priorities.
