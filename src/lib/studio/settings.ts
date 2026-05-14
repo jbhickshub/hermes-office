@@ -19,6 +19,7 @@ export type StudioGatewaySettings = {
   url: string;
   token: string;
   adapterType: StudioGatewayAdapterType;
+  autoConnect?: boolean;
   profiles?: Partial<Record<StudioGatewayAdapterType, StudioGatewayProfile>>;
   lastKnownGood?: StudioGatewayConnectionState;
 };
@@ -40,6 +41,7 @@ export type StudioGatewaySettingsPublic = {
   url: string;
   tokenConfigured: boolean;
   adapterType: StudioGatewayAdapterType;
+  autoConnect?: boolean;
   profiles?: Partial<Record<StudioGatewayAdapterType, StudioGatewayProfilePublic>>;
   lastKnownGood?: StudioGatewayConnectionStatePublic;
 };
@@ -59,6 +61,7 @@ export type StudioGatewaySettingsPatch = {
   url?: string | null;
   token?: string | null;
   adapterType?: StudioGatewayAdapterType | null;
+  autoConnect?: boolean | null;
   profiles?: Partial<Record<StudioGatewayAdapterType, StudioGatewayProfilePatch | null>> | null;
   lastKnownGood?: StudioGatewayConnectionStatePatch | null;
 };
@@ -685,12 +688,14 @@ const normalizeGatewaySettings = (value: unknown): StudioGatewaySettings | null 
   if (!url) return null;
   const token = coerceString(value.token);
   const adapterType = normalizeGatewayAdapterType(value.adapterType);
+  const autoConnect = typeof value.autoConnect === "boolean" ? value.autoConnect : undefined;
   const profiles = normalizeGatewayProfiles(value.profiles);
   const lastKnownGood = normalizeGatewayConnectionState(value.lastKnownGood);
   return {
     url,
     token,
     adapterType,
+    ...(typeof autoConnect === "boolean" ? { autoConnect } : {}),
     ...(profiles ? { profiles } : {}),
     ...(lastKnownGood ? { lastKnownGood } : {}),
   };
@@ -743,6 +748,12 @@ const mergeGatewaySettings = (
     patch.adapterType === undefined
       ? current?.adapterType ?? "openclaw"
       : normalizeGatewayAdapterType(patch.adapterType);
+  const nextAutoConnect =
+    patch.autoConnect === undefined
+      ? current?.autoConnect
+      : typeof patch.autoConnect === "boolean"
+        ? patch.autoConnect
+        : undefined;
   const nextProfiles = mergeGatewayProfiles(current?.profiles, patch.profiles);
   const nextLastKnownGood = mergeGatewayConnectionState(
     current?.lastKnownGood ?? null,
@@ -752,6 +763,7 @@ const mergeGatewaySettings = (
     url: nextUrl,
     token: nextToken,
     adapterType: nextAdapterType,
+    ...(typeof nextAutoConnect === "boolean" ? { autoConnect: nextAutoConnect } : {}),
     ...(nextProfiles ? { profiles: nextProfiles } : {}),
     ...(nextLastKnownGood ? { lastKnownGood: nextLastKnownGood } : {}),
   };
@@ -1038,6 +1050,7 @@ export const sanitizeStudioGatewaySettings = (
     url: value.url,
     tokenConfigured: value.token.length > 0,
     adapterType: value.adapterType,
+    ...(typeof value.autoConnect === "boolean" ? { autoConnect: value.autoConnect } : {}),
     profiles: value.profiles
       ? Object.fromEntries(
           Object.entries(value.profiles).map(([adapterType, profile]) => [

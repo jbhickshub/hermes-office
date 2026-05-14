@@ -62,17 +62,24 @@ describe("loadLocalGatewayDefaults with CLAW3D_GATEWAY_URL", () => {
   it("prefers openclaw.json over env vars when both exist", async () => {
     process.env.CLAW3D_GATEWAY_URL = "ws://env-gateway:18789";
     process.env.CLAW3D_GATEWAY_TOKEN = "env-token";
-    // Use real state dir which has openclaw.json
-    delete process.env.OPENCLAW_STATE_DIR;
+    const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "claw3d-gateway-defaults-"));
+    process.env.OPENCLAW_STATE_DIR = stateDir;
+    fs.writeFileSync(
+      path.join(stateDir, "openclaw.json"),
+      JSON.stringify({
+        gateway: {
+          port: 18789,
+          auth: { token: "file-token" },
+        },
+      }),
+      "utf8"
+    );
     const { loadLocalGatewayDefaults } = await import(
       "../../src/lib/studio/settings-store"
     );
     const result = loadLocalGatewayDefaults();
-    // Should return the file-based defaults, not the env vars
-    if (result) {
-      expect(result.url).not.toBe("ws://env-gateway:18789");
-    }
-    // If no file exists in CI, it falls back to env — that's also correct
+    expect(result?.url).toBe("ws://localhost:18789");
+    expect(result?.token).toBe("file-token");
   });
 
   it("uses CLAW3D_GATEWAY_ADAPTER_TYPE for Hermes env defaults", async () => {
@@ -110,6 +117,46 @@ describe("loadLocalGatewayDefaults with CLAW3D_GATEWAY_URL", () => {
       profiles: {
         hermes: { url: "ws://localhost:19444", token: "" },
       },
+    });
+  });
+
+  it("preserves saved last known good gateway when local defaults are available", async () => {
+    delete process.env.CLAW3D_GATEWAY_URL;
+    delete process.env.CLAW3D_GATEWAY_TOKEN;
+    process.env.HERMES_ADAPTER_PORT = "19444";
+
+    const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "claw3d-gateway-defaults-"));
+    process.env.OPENCLAW_STATE_DIR = stateDir;
+    fs.mkdirSync(path.join(stateDir, "claw3d"), { recursive: true });
+    fs.writeFileSync(
+      path.join(stateDir, "claw3d", "settings.json"),
+      JSON.stringify({
+        version: 1,
+        gateway: {
+          url: "ws://localhost:19444",
+          token: "",
+          adapterType: "hermes",
+          autoConnect: false,
+          lastKnownGood: {
+            url: "ws://localhost:19444",
+            token: "",
+            adapterType: "hermes",
+          },
+        },
+      }),
+      "utf8"
+    );
+
+    const { loadStudioSettings } = await import(
+      "../../src/lib/studio/settings-store"
+    );
+    const result = loadStudioSettings();
+
+    expect(result.gateway?.autoConnect).toBe(false);
+    expect(result.gateway?.lastKnownGood).toEqual({
+      url: "ws://localhost:19444",
+      token: "",
+      adapterType: "hermes",
     });
   });
 

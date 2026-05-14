@@ -175,6 +175,7 @@ export const loadStudioSettings = (): StudioSettings => {
         ...settings,
         gateway: settings.gateway?.url?.trim()
           ? {
+              ...settings.gateway,
               url: settings.gateway.url.trim(),
               token: gateway.token,
               adapterType: settings.gateway.adapterType,

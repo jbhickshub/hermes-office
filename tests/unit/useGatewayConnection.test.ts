@@ -4,7 +4,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 
 const ORIGINAL_ENV = { ...process.env };
 
-const setupAndImportHook = async (gatewayUrl: string | null) => {
+const setupAndImportHook = async (
+  gatewayUrl: string | null,
+  options?: { helloAdapterType?: "openclaw" | "hermes" | "demo" | "custom" }
+) => {
   process.env = { ...ORIGINAL_ENV };
   if (gatewayUrl === null) {
     delete process.env.NEXT_PUBLIC_GATEWAY_URL;
@@ -14,17 +17,22 @@ const setupAndImportHook = async (gatewayUrl: string | null) => {
 
   vi.resetModules();
   vi.spyOn(console, "info").mockImplementation(() => {});
+  const helloAdapterType = options?.helloAdapterType ?? "openclaw";
 
   const captured: {
     url: string | null;
     token: unknown;
     authScopeKey: unknown;
     clientName: unknown;
+    startCount: number;
+    stopCount: number;
   } = {
     url: null,
     token: null,
     authScopeKey: null,
     clientName: null,
+    startCount: 0,
+    stopCount: 0,
   };
 
   vi.doMock("../../src/lib/gateway/openclaw/GatewayBrowserClient", () => {
@@ -51,11 +59,13 @@ const setupAndImportHook = async (gatewayUrl: string | null) => {
       }
 
       start() {
+        captured.startCount += 1;
         this.connected = true;
-        this.opts.onHello?.({ type: "hello-ok", protocol: 1, adapterType: "openclaw" });
+        this.opts.onHello?.({ type: "hello-ok", protocol: 1, adapterType: helloAdapterType });
       }
 
       stop() {
+        captured.stopCount += 1;
         this.connected = false;
         this.opts.onClose?.({ code: 1000, reason: "stopped" });
       }
@@ -78,6 +88,7 @@ const setupAndImportHook = async (gatewayUrl: string | null) => {
       schedulePatch: (patch: unknown) => void;
       flushPending: () => Promise<void>;
     }) => {
+      status: "disconnected" | "connecting" | "connected";
       gatewayUrl: string;
       token: string;
       selectedAdapterType: "openclaw" | "hermes" | "demo" | "custom";
@@ -336,6 +347,210 @@ describe("useGatewayConnection", () => {
     });
     expect(screen.getByTestId("shouldPromptForConnect")).toHaveTextContent("yes");
     expect(captured.url).toBeNull();
+  });
+
+  it("does_not_auto_connect_when_auto_connect_is_disabled", async () => {
+    const { useGatewayConnection, captured } = await setupAndImportHook(null);
+    const coordinator = {
+      loadSettingsEnvelope: async () => ({
+        settings: {
+          version: 1,
+          gateway: {
+            url: "ws://localhost:18789",
+            token: "",
+            adapterType: "hermes",
+            autoConnect: false,
+            lastKnownGood: {
+              url: "ws://localhost:18789",
+              token: "",
+              adapterType: "hermes",
+            },
+          },
+          focused: {},
+          avatars: {},
+          analytics: {},
+          voiceReplies: {},
+          office: {},
+          deskAssignments: {},
+          standup: {},
+          taskBoard: {},
+        },
+        localGatewayDefaults: null,
+      }),
+      loadSettings: async () => null,
+      schedulePatch: () => {},
+      flushPending: async () => {},
+    };
+
+    const Probe = () => {
+      const state = useGatewayConnection(coordinator);
+      return createElement(
+        "div",
+        null,
+        createElement("div", { "data-testid": "gatewayUrl" }, state.gatewayUrl),
+        createElement(
+          "div",
+          { "data-testid": "shouldPromptForConnect" },
+          state.shouldPromptForConnect ? "yes" : "no"
+        )
+      );
+    };
+
+    render(createElement(Probe));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("gatewayUrl")).toHaveTextContent("ws://localhost:18789");
+    });
+    expect(screen.getByTestId("shouldPromptForConnect")).toHaveTextContent("yes");
+    expect(captured.url).toBeNull();
+  });
+
+  it("auto_connects_once_from_persisted_last_known_good_on_initial_load", async () => {
+    const { useGatewayConnection, captured } = await setupAndImportHook(null, {
+      helloAdapterType: "hermes",
+    });
+    const coordinator = {
+      loadSettingsEnvelope: async () => ({
+        settings: {
+          version: 1,
+          gateway: {
+            url: "ws://localhost:18789",
+            token: "",
+            adapterType: "hermes",
+            lastKnownGood: {
+              url: "ws://localhost:18789",
+              token: "",
+              adapterType: "hermes",
+            },
+          },
+          focused: {},
+          avatars: {},
+          analytics: {},
+          voiceReplies: {},
+          office: {},
+          deskAssignments: {},
+          standup: {},
+          taskBoard: {},
+        },
+        localGatewayDefaults: null,
+      }),
+      loadSettings: async () => null,
+      schedulePatch: () => {},
+      flushPending: async () => {},
+    };
+
+    const Probe = () => {
+      const state = useGatewayConnection(coordinator);
+      return createElement(
+        "div",
+        null,
+        createElement("div", { "data-testid": "gatewayUrl" }, state.gatewayUrl),
+        createElement("div", { "data-testid": "status" }, state.status),
+        createElement(
+          "div",
+          { "data-testid": "shouldPromptForConnect" },
+          state.shouldPromptForConnect ? "yes" : "no"
+        )
+      );
+    };
+
+    render(createElement(Probe));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("gatewayUrl")).toHaveTextContent("ws://localhost:18789");
+    });
+    expect(screen.getByTestId("shouldPromptForConnect")).toHaveTextContent("no");
+    await waitFor(
+      () => {
+        expect(captured.startCount).toBe(1);
+      },
+      { timeout: 1_500 }
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("status")).toHaveTextContent("connected");
+    });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const autoConnectLogs = vi
+      .mocked(console.info)
+      .mock.calls.filter(
+        ([prefix, message]) => prefix === "[gateway-client]" && message === "auto-connect"
+      );
+    expect(autoConnectLogs).toHaveLength(1);
+    expect(captured.startCount).toBe(1);
+    expect(captured.stopCount).toBe(0);
+  });
+
+  it("does_not_auto_connect_after_manual_connect_records_first_last_known_good", async () => {
+    const { useGatewayConnection, captured } = await setupAndImportHook(null, {
+      helloAdapterType: "hermes",
+    });
+    const coordinator = {
+      loadSettingsEnvelope: async () => ({
+        settings: {
+          version: 1,
+          gateway: {
+            url: "ws://localhost:18789",
+            token: "",
+            adapterType: "hermes",
+          },
+          focused: {},
+          avatars: {},
+          analytics: {},
+          voiceReplies: {},
+          office: {},
+          deskAssignments: {},
+          standup: {},
+          taskBoard: {},
+        },
+        localGatewayDefaults: null,
+      }),
+      loadSettings: async () => null,
+      schedulePatch: () => {},
+      flushPending: async () => {},
+    };
+
+    const Probe = () => {
+      const state = useGatewayConnection(coordinator);
+      return createElement(
+        "div",
+        null,
+        createElement("div", { "data-testid": "gatewayUrl" }, state.gatewayUrl),
+        createElement("div", { "data-testid": "status" }, state.status),
+        createElement(
+          "button",
+          {
+            type: "button",
+            "data-testid": "connect",
+            onClick: () => {
+              void state.connect();
+            },
+          },
+          "connect"
+        )
+      );
+    };
+
+    render(createElement(Probe));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("gatewayUrl")).toHaveTextContent("ws://localhost:18789");
+    });
+    fireEvent.click(screen.getByTestId("connect"));
+    await waitFor(() => {
+      expect(screen.getByTestId("status")).toHaveTextContent("connected");
+    });
+    expect(captured.startCount).toBe(1);
+    await new Promise((resolve) => setTimeout(resolve, 1_100));
+
+    const autoConnectLogs = vi
+      .mocked(console.info)
+      .mock.calls.filter(
+        ([prefix, message]) => prefix === "[gateway-client]" && message === "auto-connect"
+      );
+    expect(autoConnectLogs).toHaveLength(0);
+    expect(captured.startCount).toBe(1);
+    expect(captured.stopCount).toBe(0);
   });
 
   it("uses_a_small_initial_auto_connect_delay_for_hermes_and_demo_only", async () => {

@@ -124,6 +124,22 @@ const OPENCLAW_WEBCHAT_UI_CLIENT_ID = "webchat-ui";
 const isAutoManagedAdapter = (adapterType: StudioGatewayAdapterType) =>
   adapterType !== "custom";
 
+const resolveGatewayAutoConnectEnabled = (
+  settings: unknown,
+  gateway: unknown
+): boolean => {
+  const gatewayRecord =
+    gateway && typeof gateway === "object" ? (gateway as Record<string, unknown>) : null;
+  const settingsRecord =
+    settings && typeof settings === "object" ? (settings as Record<string, unknown>) : null;
+  const value =
+    gatewayRecord && "autoConnect" in gatewayRecord
+      ? gatewayRecord.autoConnect
+      : settingsRecord?.autoConnect;
+
+  return value === false ? false : true;
+};
+
 export const resolveGatewayClientName = (
   adapterType: StudioGatewayAdapterType,
   gatewayUrl: string
@@ -700,6 +716,7 @@ export const useGatewayConnection = (
 ): GatewayConnectionState => {
   const [client] = useState(() => new GatewayClient());
   const didAutoConnect = useRef(false);
+  const initialSettingsHadLastKnownGoodRef = useRef(false);
   const hasConnectedOnceRef = useRef(false);
   const loadedGatewaySettings = useRef<{
     gatewayUrl: string;
@@ -726,10 +743,13 @@ export const useGatewayConnection = (
     null
   );
   const [status, setStatus] = useState<GatewayStatus>("disconnected");
+  const statusRef = useRef<GatewayStatus>("disconnected");
   const [error, setError] = useState<string | null>(null);
   const [connectErrorCode, setConnectErrorCode] = useState<string | null>(null);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [hasLastKnownGoodState, setHasLastKnownGoodState] = useState(false);
+  const [autoConnectEnabled, setAutoConnectEnabled] = useState(true);
+  const [initialAutoConnectPending, setInitialAutoConnectPending] = useState(false);
   const setSelectedAdapterType = useCallback(
     (value: StudioGatewayAdapterType) => {
       setSelectedAdapterTypeState(value);
@@ -759,6 +779,7 @@ export const useGatewayConnection = (
         if (cancelled) return;
         const normalizedDefaults = normalizeLocalGatewayDefaults(envelope.localGatewayDefaults);
         setLocalGatewayDefaults(normalizedDefaults);
+        const nextAutoConnectEnabled = resolveGatewayAutoConnectEnabled(settings, gateway);
         const lastKnownGood =
           gateway && "lastKnownGood" in gateway && gateway.lastKnownGood
             ? {
@@ -834,18 +855,28 @@ export const useGatewayConnection = (
         );
         const nextGatewayUrl = selectedProfile.url;
         const nextToken = selectedProfile.token;
+        const nextProfiles = {
+          ...mergedProfiles,
+          [nextAdapterType]: {
+            url: nextGatewayUrl.trim(),
+            token: nextToken,
+          },
+        };
+        const nextHasLastKnownGood = Boolean(lastKnownGoodForSelectedAdapter?.url);
+        initialSettingsHadLastKnownGoodRef.current = nextHasLastKnownGood;
         loadedGatewaySettings.current = {
           gatewayUrl: nextGatewayUrl.trim(),
           token: nextToken,
           adapterType: nextAdapterType,
-          profiles: mergedProfiles,
-          hasLastKnownGood: Boolean(lastKnownGoodForSelectedAdapter?.url),
+          profiles: nextProfiles,
+          hasLastKnownGood: nextHasLastKnownGood,
         };
         setGatewayUrl(nextGatewayUrl);
         setToken(nextToken);
         setSelectedAdapterTypeState(nextAdapterType);
-        setAdapterProfiles(mergedProfiles);
-        setHasLastKnownGoodState(Boolean(lastKnownGoodForSelectedAdapter?.url));
+        setAdapterProfiles(nextProfiles);
+        setHasLastKnownGoodState(nextHasLastKnownGood);
+        setAutoConnectEnabled(nextAutoConnectEnabled);
       } catch (err) {
         if (!cancelled) {
           const message = err instanceof Error ? err.message : "Failed to load gateway settings.";
@@ -854,6 +885,7 @@ export const useGatewayConnection = (
       } finally {
         if (!cancelled) {
           if (!loadedGatewaySettings.current) {
+            initialSettingsHadLastKnownGoodRef.current = false;
             loadedGatewaySettings.current = {
               gatewayUrl: DEFAULT_UPSTREAM_GATEWAY_URL.trim(),
               token: "",
@@ -875,6 +907,7 @@ export const useGatewayConnection = (
   useEffect(() => {
     return client.onStatus((nextStatus) => {
       gatewayDebugLog("status", { nextStatus });
+      statusRef.current = nextStatus;
       setStatus(nextStatus);
       if (nextStatus !== "connecting") {
         setError(null);
@@ -902,10 +935,19 @@ export const useGatewayConnection = (
   }, [client]);
 
   const connect = useCallback(async () => {
+    if (statusRef.current === "connected" || statusRef.current === "connecting") {
+      gatewayDebugLog("connect:skip-already-active", {
+        selectedAdapterType,
+        gatewayUrl,
+        status: statusRef.current,
+      });
+      return;
+    }
     if (autoConnectTimerRef.current) {
       clearTimeout(autoConnectTimerRef.current);
       autoConnectTimerRef.current = null;
     }
+    setInitialAutoConnectPending(false);
     if (retryTimerRef.current) {
       clearTimeout(retryTimerRef.current);
       retryTimerRef.current = null;
@@ -920,15 +962,18 @@ export const useGatewayConnection = (
     retryAttemptRef.current = 0;
     wasManualDisconnectRef.current = false;
     if (selectedAdapterType === "custom") {
+      statusRef.current = "connecting";
       setStatus("connecting");
       try {
         await settingsCoordinator.flushPending();
         await probeCustomRuntime(gatewayUrl);
         setDetectedAdapterType("custom");
+        statusRef.current = "connected";
         setStatus("connected");
         setConnectErrorCode(null);
         gatewayDebugLog("connect:custom-success", { gatewayUrl });
       } catch (err) {
+        statusRef.current = "disconnected";
         setStatus("disconnected");
         setDetectedAdapterType(null);
         setConnectErrorCode("studio.custom_runtime_probe_failed");
@@ -1018,10 +1063,14 @@ export const useGatewayConnection = (
   useEffect(() => {
     if (didAutoConnect.current) return;
     if (!settingsLoaded) return;
+    if (!autoConnectEnabled) return;
+    if (status === "connected" || status === "connecting") return;
     if (!hasLastKnownGoodState) return;
+    if (!initialSettingsHadLastKnownGoodRef.current) return;
     if (!gatewayUrl.trim()) return;
     if (!isAutoManagedAdapter(selectedAdapterType)) return;
     didAutoConnect.current = true;
+    setInitialAutoConnectPending(true);
     const delayMs = resolveInitialGatewayAutoConnectDelayMs(selectedAdapterType);
     gatewayDebugLog("auto-connect", {
       selectedAdapterType,
@@ -1030,15 +1079,30 @@ export const useGatewayConnection = (
     });
     autoConnectTimerRef.current = window.setTimeout(() => {
       autoConnectTimerRef.current = null;
-      void connect();
+      if (statusRef.current === "connected" || statusRef.current === "connecting") {
+        setInitialAutoConnectPending(false);
+        return;
+      }
+      void connect().finally(() => {
+        setInitialAutoConnectPending(false);
+      });
     }, delayMs);
     return () => {
       if (autoConnectTimerRef.current) {
         window.clearTimeout(autoConnectTimerRef.current);
         autoConnectTimerRef.current = null;
+        setInitialAutoConnectPending(false);
       }
     };
-  }, [connect, gatewayUrl, hasLastKnownGoodState, selectedAdapterType, settingsLoaded]);
+  }, [
+    autoConnectEnabled,
+    connect,
+    gatewayUrl,
+    hasLastKnownGoodState,
+    selectedAdapterType,
+    settingsLoaded,
+    status,
+  ]);
 
   // Auto-retry on disconnect (gateway busy, network blip, etc.)
   useEffect(() => {
@@ -1177,6 +1241,7 @@ export const useGatewayConnection = (
     wasManualDisconnectRef.current = true;
     setDetectedAdapterType(null);
     if (selectedAdapterType === "custom") {
+      statusRef.current = "disconnected";
       setStatus("disconnected");
       return;
     }
@@ -1195,7 +1260,9 @@ export const useGatewayConnection = (
   const shouldPromptForConnect =
     settingsLoaded &&
     status !== "connected" &&
-    (selectedAdapterType === "custom" ||
+    !initialAutoConnectPending &&
+    (!autoConnectEnabled ||
+      selectedAdapterType === "custom" ||
       !hasLastKnownGoodState ||
       !gatewayUrl.trim() ||
       (selectedAdapterType === "openclaw" && !token.trim()) ||

@@ -33,6 +33,19 @@ describe("studio settings normalization", () => {
     expect(normalized.gateway?.url).toBe("ws://localhost:18789");
   });
 
+  it("preserves gateway auto connect preference", () => {
+    const normalized = normalizeStudioSettings({
+      gateway: {
+        url: "ws://localhost:18789",
+        token: "",
+        adapterType: "hermes",
+        autoConnect: false,
+      },
+    });
+
+    expect(normalized.gateway?.autoConnect).toBe(false);
+  });
+
   it("normalizes_dual_mode_preferences", () => {
     const normalized = normalizeStudioSettings({
       focused: {
